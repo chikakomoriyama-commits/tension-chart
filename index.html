@@ -37,7 +37,7 @@ body{
 header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
 .brand-logo{height:26px;width:auto;display:block;margin-bottom:8px}
 h1{font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.08em}
-.file-actions{display:flex;gap:8px}
+.file-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .btn{
   font-family:inherit;font-size:.8rem;letter-spacing:.04em;
   border:1px solid var(--line);background:var(--card);color:var(--ink);
@@ -261,6 +261,87 @@ input[type="file"]{display:none}
   .drill{margin-left:0}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+/* ================================================================
+   ホワイトボードモード
+   ================================================================ */
+body.wb{overflow:hidden;padding:0}
+body.wb .wrap{display:none}
+#wb-ui{display:none}
+body.wb #wb-ui{display:block}
+
+#wb-toolbar{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);
+  padding:10px 18px;margin:0;
+}
+#wb-toolbar h1{font-size:1.02rem}
+#wb-toolbar h1 .ver{font-size:.72rem;font-weight:500;color:var(--muted);letter-spacing:.12em;margin-left:8px}
+#wb-toolbar .btn{font-size:.78rem;padding:5px 14px}
+.zoomgrp{display:flex;align-items:center;border:1px solid var(--line);background:var(--card)}
+.zoomgrp .btn{border:none;padding:5px 10px}
+#zoom-label{font-size:.75rem;color:var(--muted);min-width:3.4em;text-align:center;
+  font-family:'Montserrat','Noto Sans JP',sans-serif}
+
+#board{
+  position:fixed;inset:0;overflow:hidden;cursor:grab;
+  background-color:#FAFAF8;
+  background-image:radial-gradient(circle, #DDDDD8 1px, transparent 1px);
+}
+#board.panning{cursor:grabbing;user-select:none}
+#canvas{position:absolute;left:0;top:0;transform-origin:0 0}
+#edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;z-index:0}
+
+.wb-hint{
+  position:fixed;left:16px;bottom:12px;z-index:20;
+  font-size:.7rem;color:var(--muted);letter-spacing:.04em;
+  background:rgba(255,255,255,.85);padding:4px 10px;border:1px solid var(--line);
+}
+
+/* --- チャートカード（テキストモードのスタイルを上書きして小型化） --- */
+#board .card{
+  position:absolute;z-index:1;width:440px;cursor:default;
+  background:var(--card);border:1px solid var(--line);
+  box-shadow:0 2px 10px rgba(0,0,0,.05);
+}
+#board .card-head{
+  display:flex;align-items:baseline;gap:10px;
+  padding:10px 16px;border-bottom:1px solid var(--line);background:#FCFCFB;
+}
+#board .card-num{
+  font-family:'Montserrat','Noto Sans JP',sans-serif;font-weight:600;
+  font-size:.8rem;color:var(--action);flex:none;letter-spacing:.04em;
+}
+#board .card-ttl{font-weight:700;font-size:.9rem;letter-spacing:.06em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#board .card-ttl.untitled{color:var(--muted);font-weight:500}
+
+#board .pole{border:none;padding:14px 18px 12px;position:static}
+#board .pole.vision{border-top:3px solid var(--vision)}
+#board .pole.reality{background:var(--reality-soft);border-bottom:3px solid var(--reality)}
+#board .pole-label{font-size:.82rem}
+#board .date-field{font-size:.72rem}
+#board .date-field input[type="date"]{font-size:.78rem}
+#board ul.items{margin-top:4px}
+#board ul.items li{gap:8px;padding:2px 0}
+#board ul.items textarea{font-size:.86rem;line-height:1.6}
+#board .add-item{font-size:.74rem;margin-top:4px}
+
+#board .steps{padding:10px 18px 12px;gap:8px;
+  border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+#board .steps::before,#board .steps::after{display:none}
+#board .steps-label{position:static;align-self:flex-start;background:none;padding:0;
+  font-size:.68rem;letter-spacing:.12em;margin-bottom:0}
+#board .step{margin:0;padding:8px 10px 7px 12px}
+#board .step-row{gap:8px}
+#board .step-row textarea{font-size:.86rem;line-height:1.55;padding:1px 0}
+#board .pill{font-size:.62rem;letter-spacing:.08em;padding:1px 8px;margin-top:3px}
+#board .ov-num{font-size:.78rem;min-width:2em;margin-top:3px}
+#board .step-meta{gap:12px;font-size:.7rem;margin-top:5px}
+#board .step-meta input,#board .step-meta select{font-size:.75rem}
+#board .drill{font-size:.68rem;padding:2px 11px;gap:4px}
+#board .add-step{font-size:.74rem;padding:4px 18px;background:var(--card);margin:0}
 </style>
 </head>
 <body>
@@ -272,6 +353,7 @@ input[type="file"]{display:none}
     </div>
     <div class="file-actions">
       <span id="sync-status" style="font-size:.72rem;color:var(--muted);align-self:center;margin-right:4px"></span>
+      <button class="btn" id="btn-mode-board">ホワイトボード</button>
       <button class="btn" id="btn-view">全体を見渡す</button>
       <button class="btn" id="btn-members">メンバー</button>
       <button class="btn" id="btn-save">保存（JSON）</button>
@@ -284,6 +366,39 @@ input[type="file"]{display:none}
 
   <main class="chart" id="chart"></main>
 
+</div>
+
+<!-- ================= ホワイトボードモード ================= -->
+<div id="wb-ui">
+  <div id="board">
+    <div id="canvas">
+      <svg id="edges" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrw" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#9A2827"/>
+          </marker>
+        </defs>
+        <g id="edge-paths"></g>
+      </svg>
+    </div>
+  </div>
+  <div id="wb-toolbar">
+    <h1>緊張構造チャート<span class="ver">ホワイトボード</span></h1>
+    <div class="file-actions">
+      <button class="btn" id="btn-mode-text">テキスト表示</button>
+      <button class="btn" id="wb-save">保存（JSON）</button>
+      <button class="btn" id="wb-load">読み込み</button>
+      <span class="zoomgrp">
+        <button class="btn" id="btn-zoom-out" title="縮小">−</button>
+        <span id="zoom-label">100%</span>
+        <button class="btn" id="btn-zoom-in" title="拡大">＋</button>
+      </span>
+      <button class="btn" id="btn-fit">全体表示</button>
+      <button class="btn" id="btn-100">100%</button>
+    </div>
+  </div>
+  <div class="wb-hint">スクロール：移動　⌘+ホイール／ピンチ：拡大縮小　背景ドラッグ：移動　JSONファイルはドロップでも読み込めます</div>
 </div>
 
 <div id="auth-gate" class="modal-bg" style="display:none">
@@ -350,6 +465,9 @@ function deleteChartCascade(chart){
     if(sub) deleteChartCascade(sub);
   });
   delete db.charts[chart.id];
+}
+function kidsOf(chart){
+  return chart.actions.map(a => subchartOfAction(a.id)).filter(Boolean);
 }
 
 /* ================= render ================= */
@@ -1006,8 +1124,530 @@ function reconcileDates(){
   });
 }
 
-/* ================= save / load ================= */
-document.getElementById('btn-save').addEventListener('click', () => {
+/* ================================================================
+   ホワイトボードモード（同じ db を別ビューで表示・編集する）
+   ================================================================ */
+const $board  = document.getElementById('board');
+const $canvas = document.getElementById('canvas');
+const $edges  = document.getElementById('edges');
+const $edgePaths = document.getElementById('edge-paths');
+const $zoomLabel = document.getElementById('zoom-label');
+
+const WB_GRID = 26;
+let wbView = { x: 0, y: 0, k: 1 };
+const WB_K_MIN = 0.12, WB_K_MAX = 2.5;
+
+function applyView(){
+  $canvas.style.transform = `translate(${wbView.x}px, ${wbView.y}px) scale(${wbView.k})`;
+  $board.style.backgroundSize = `${WB_GRID * wbView.k}px ${WB_GRID * wbView.k}px`;
+  $board.style.backgroundPosition = `${wbView.x}px ${wbView.y}px`;
+  $zoomLabel.textContent = Math.round(wbView.k * 100) + '%';
+}
+function zoomAt(clientX, clientY, factor){
+  const r = $board.getBoundingClientRect();
+  const mx = clientX - r.left, my = clientY - r.top;
+  const k2 = Math.min(WB_K_MAX, Math.max(WB_K_MIN, wbView.k * factor));
+  wbView.x = mx - (mx - wbView.x) * (k2 / wbView.k);
+  wbView.y = my - (my - wbView.y) * (k2 / wbView.k);
+  wbView.k = k2;
+  applyView();
+}
+$board.addEventListener('wheel', e => {
+  e.preventDefault();
+  if(e.ctrlKey || e.metaKey){          // ピンチ（Macトラックパッド）や ⌘+ホイール
+    zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.012));
+  } else {                              // 2本指スクロール＝移動
+    wbView.x -= e.deltaX;
+    wbView.y -= e.deltaY;
+    applyView();
+  }
+}, { passive: false });
+
+let wbPan = null;
+$board.addEventListener('pointerdown', e => {
+  if(e.target.closest('.card')) return;      // カード上はパンしない
+  wbPan = { sx: e.clientX, sy: e.clientY, vx: wbView.x, vy: wbView.y };
+  $board.classList.add('panning');
+  $board.setPointerCapture(e.pointerId);
+});
+$board.addEventListener('pointermove', e => {
+  if(!wbPan) return;
+  wbView.x = wbPan.vx + (e.clientX - wbPan.sx);
+  wbView.y = wbPan.vy + (e.clientY - wbPan.sy);
+  applyView();
+});
+$board.addEventListener('pointerup', () => {
+  wbPan = null;
+  $board.classList.remove('panning');
+});
+
+document.getElementById('btn-zoom-in').addEventListener('click', () => {
+  const r = $board.getBoundingClientRect();
+  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.2);
+});
+document.getElementById('btn-zoom-out').addEventListener('click', () => {
+  const r = $board.getBoundingClientRect();
+  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.2);
+});
+document.getElementById('btn-100').addEventListener('click', () => {
+  const r = $board.getBoundingClientRect();
+  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / wbView.k);
+});
+document.getElementById('btn-fit').addEventListener('click', fitView);
+
+function contentBounds(){
+  let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+  wbPos.forEach(p => {
+    x1 = Math.min(x1, p.x); y1 = Math.min(y1, p.y);
+    x2 = Math.max(x2, p.x + p.w); y2 = Math.max(y2, p.y + p.h);
+  });
+  if(!isFinite(x1)) return null;
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+function fitView(){
+  const b = contentBounds();
+  if(!b) return;
+  const r = $board.getBoundingClientRect();
+  const pad = 70, topbar = 58;
+  const k = Math.min(WB_K_MAX, Math.max(WB_K_MIN,
+    Math.min((r.width - pad * 2) / b.w, (r.height - topbar - pad * 2) / b.h, 1.4)));
+  wbView.k = k;
+  wbView.x = (r.width  - b.w * k) / 2 - b.x * k;
+  wbView.y = topbar + (r.height - topbar - b.h * k) / 2 - b.y * k;
+  applyView();
+}
+function centerOn(chartId){
+  const p = wbPos.get(chartId);
+  if(!p) return;
+  const r = $board.getBoundingClientRect();
+  wbView.x = r.width  / 2 - (p.x + p.w / 2) * wbView.k;
+  wbView.y = r.height / 2 - (p.y + p.h / 2) * wbView.k;
+  applyView();
+}
+
+/* ---- ツリー自動配置 ---- */
+const CARD_W = 440, GAP_X = 150, GAP_Y = 70, WB_ORIGIN = 80;
+let wbPos = new Map();   // chartId -> {x, y, w, h}
+
+const cardById = id => $canvas.querySelector(`.card[data-chart-id="${id}"]`);
+
+function wbLayout(){
+  wbPos.clear();
+  const root = chartOf(db.rootId);
+  if(!root) return;
+  const M = new Map();  // chartId -> {sub, total, h}
+  function measure(chart){
+    const el = cardById(chart.id);
+    const h = el ? el.offsetHeight : 0;
+    const kids = kidsOf(chart);
+    let total = 0;
+    kids.forEach((k, i) => { total += measure(k); if(i > 0) total += GAP_Y; });
+    const sub = Math.max(h, total);
+    M.set(chart.id, { sub, total, h });
+    return sub;
+  }
+  measure(root);
+  function place(chart, x, y){
+    const m = M.get(chart.id);
+    const el = cardById(chart.id);
+    const cy = y + (m.sub - m.h) / 2;
+    if(el){ el.style.left = x + 'px'; el.style.top = cy + 'px'; }
+    wbPos.set(chart.id, { x, y: cy, w: CARD_W, h: m.h });
+    let yy = y + (m.sub - m.total) / 2;
+    kidsOf(chart).forEach(k => {
+      place(k, x + CARD_W + GAP_X, yy);
+      yy += M.get(k.id).sub + GAP_Y;
+    });
+  }
+  place(root, WB_ORIGIN, WB_ORIGIN);
+
+  const b = contentBounds();
+  if(b){
+    $edges.setAttribute('width',  b.x + b.w + 200);
+    $edges.setAttribute('height', b.y + b.h + 200);
+  }
+}
+
+/* 親のアクション行 → 子チャートの「望む成果」へ点線（テレスコーピング） */
+function wbDrawEdges(){
+  $edgePaths.innerHTML = '';
+  Object.values(db.charts).forEach(chart => {
+    if(!chart.parentActionId) return;
+    const parent = parentChartOf(chart);
+    if(!parent) return;
+    const pp = wbPos.get(parent.id), cp = wbPos.get(chart.id);
+    const pEl = cardById(parent.id), cEl = cardById(chart.id);
+    if(!pp || !cp || !pEl || !cEl) return;
+    const row = pEl.querySelector(`[data-action-id="${chart.parentActionId}"]`);
+    const vision = cEl.querySelector('.pole.vision');
+    if(!row || !vision) return;
+    const pr = pEl.getBoundingClientRect();
+    const rr = row.getBoundingClientRect();
+    const cr = cEl.getBoundingClientRect();
+    const vr = vision.getBoundingClientRect();
+    const sy = pp.y + (rr.top - pr.top + rr.height / 2) / wbView.k;
+    const sx = pp.x + pp.w;
+    const ey = cp.y + (vr.top - cr.top + vr.height / 2) / wbView.k;
+    const ex = cp.x;
+    const dx = Math.max(40, (ex - sx) / 2);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${sx} ${sy} C ${sx + dx} ${sy}, ${ex - dx} ${ey}, ${ex - 4} ${ey}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#9A2827');
+    path.setAttribute('stroke-width', '1.6');
+    path.setAttribute('stroke-dasharray', '6 5');
+    path.setAttribute('marker-end', 'url(#arrw)');
+    path.setAttribute('opacity', '.8');
+    $edgePaths.appendChild(path);
+  });
+}
+
+let wbLayoutQueued = false;
+function wbScheduleLayout(){
+  if(wbLayoutQueued) return;
+  wbLayoutQueued = true;
+  requestAnimationFrame(() => {
+    wbLayoutQueued = false;
+    wbLayout();
+    wbDrawEdges();
+  });
+}
+
+let wbPendingFit = true;   // 初回表示とJSON読み込み後に全体表示する
+
+function renderWB(afterLayout){
+  $canvas.querySelectorAll('.card').forEach(el => el.remove());
+  const root = chartOf(db.rootId);
+  if(root){
+    (function walk(chart){
+      $canvas.appendChild(wbCardEl(chart));
+      kidsOf(chart).forEach(walk);
+    })(root);
+  }
+  requestAnimationFrame(() => {
+    $canvas.querySelectorAll('textarea').forEach(autosize);
+    wbLayout();
+    wbDrawEdges();
+    if(wbPendingFit){ wbPendingFit = false; fitView(); }
+    if(afterLayout) afterLayout();
+  });
+}
+
+/* フォーカスを保ったまま箇条書きを組み直す */
+function wbRerenderFocusPole(chartId, kind, focusIdx){
+  renderWB(() => {
+    if(focusIdx == null) return;
+    const card = cardById(chartId);
+    if(!card) return;
+    const tas = card.querySelectorAll('.pole.' + kind + ' ul.items textarea');
+    if(tas[focusIdx]) tas[focusIdx].focus();
+  });
+}
+
+function wbBulletList(chart, kind, items){
+  const ul = document.createElement('ul');
+  ul.className = 'items';
+  items.forEach((raw, idx) => {
+    let { lv, text } = parseItem(raw);
+    const li = document.createElement('li');
+    li.dataset.lv = lv;
+    const ta = document.createElement('textarea');
+    ta.rows = 1; ta.value = text;
+    ta.placeholder = '箇条書きで記入';
+    const setLv = n => {
+      lv = Math.max(0, Math.min(2, n));
+      li.dataset.lv = lv;
+      items[idx] = composeItem(lv, ta.value);
+    };
+    ta.addEventListener('input', () => {
+      items[idx] = composeItem(lv, ta.value);
+      autosize(ta);
+      wbScheduleLayout();
+    });
+    ta.addEventListener('keydown', e => {
+      if(e.key === 'Tab' && !e.isComposing){
+        e.preventDefault();
+        setLv(lv + (e.shiftKey ? -1 : 1));
+        return;
+      }
+      if(e.key === 'Enter' && !e.isComposing){
+        e.preventDefault();
+        items.splice(idx + 1, 0, composeItem(lv, ''));
+        wbRerenderFocusPole(chart.id, kind, idx + 1);
+      }
+    });
+    const bOut = document.createElement('button');
+    bOut.className = 'lv'; bOut.textContent = '⇤'; bOut.title = '一段上げる（Shift+Tab）';
+    bOut.addEventListener('click', () => { setLv(lv - 1); ta.focus(); });
+    const bIn = document.createElement('button');
+    bIn.className = 'lv'; bIn.textContent = '⇥'; bIn.title = '一段下げる（Tab）';
+    bIn.addEventListener('click', () => { setLv(lv + 1); ta.focus(); });
+    const x = document.createElement('button');
+    x.className = 'x'; x.textContent = '×'; x.title = 'この行を削除';
+    x.addEventListener('click', () => {
+      items.splice(idx, 1);
+      if(items.length === 0) items.push('');
+      wbRerenderFocusPole(chart.id, kind, null);
+    });
+    li.appendChild(ta); li.appendChild(bOut); li.appendChild(bIn); li.appendChild(x);
+    ul.appendChild(li);
+  });
+  return ul;
+}
+
+function wbPole(kind, chart){
+  const isVision = kind === 'vision';
+  const div = document.createElement('div');
+  div.className = 'pole ' + kind;
+
+  const head = document.createElement('div');
+  head.className = 'pole-head';
+  const label = document.createElement('span');
+  label.className = 'pole-label';
+  label.textContent = isVision ? '望む成果' : '今のリアリティ';
+  const dateWrap = document.createElement('label');
+  dateWrap.className = 'date-field';
+  const dateCap = document.createElement('span');
+  dateCap.textContent = isVision ? '達成期日' : '時点';
+  const date = document.createElement('input');
+  date.type = 'date';
+  date.value = isVision ? chart.goalDate : chart.realityDate;
+  date.addEventListener('change', () => {
+    if(isVision){
+      chart.goalDate = date.value;
+      // 親のアクションステップの期日と同期
+      if(chart.parentActionId){
+        const parent = parentChartOf(chart);
+        const act = parent && parent.actions.find(a => a.id === chart.parentActionId);
+        if(act) act.due = date.value;
+      }
+      renderWB();
+    } else {
+      chart.realityDate = date.value;
+    }
+  });
+  dateWrap.appendChild(dateCap); dateWrap.appendChild(date);
+  head.appendChild(label); head.appendChild(dateWrap);
+  div.appendChild(head);
+
+  const items = isVision ? chart.goalItems : chart.realityItems;
+  div.appendChild(wbBulletList(chart, kind, items));
+
+  const add = document.createElement('button');
+  add.className = 'add-item';
+  add.textContent = isVision ? '＋ 達成された状態を追加' : '＋ 現状を追加';
+  add.addEventListener('click', () => {
+    items.push('');
+    wbRerenderFocusPole(chart.id, kind, items.length - 1);
+  });
+  div.appendChild(add);
+  return div;
+}
+
+function wbStepEl(chart, action, num){
+  const div = document.createElement('div');
+  div.className = 'step';
+  div.dataset.actionId = action.id;
+  if(action.done) div.classList.add('is-done');
+
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  const cb = document.createElement('button');
+  cb.className = 'pill' + (action.done ? ' on' : '');
+  cb.textContent = action.done ? '✓' : '完了';
+  cb.title = '完了にする／戻す';
+  cb.addEventListener('click', () => { action.done = !action.done; renderWB(); });
+  row.appendChild(cb);
+  const numEl = document.createElement('span');
+  numEl.className = 'ov-num';
+  numEl.textContent = num;
+  row.appendChild(numEl);
+
+  const ta = document.createElement('textarea');
+  ta.rows = 1; ta.value = action.text;
+  ta.placeholder = 'アクションステップを記入';
+  ta.addEventListener('input', () => {
+    action.text = ta.value;
+    autosize(ta);
+    // 子チャートのタイトルにも即時反映
+    const sub = subchartOfAction(action.id);
+    if(sub){
+      const card = cardById(sub.id);
+      const ttl = card && card.querySelector('.card-ttl');
+      if(ttl){
+        ttl.textContent = ta.value.trim() || '（無題のステップ）';
+        ttl.classList.toggle('untitled', !ta.value.trim());
+      }
+    }
+    wbScheduleLayout();
+  });
+  row.appendChild(ta);
+
+  const idx = chart.actions.findIndex(x => x.id === action.id);
+  const up = document.createElement('button');
+  up.className = 'mv'; up.textContent = '↑'; up.title = '上へ';
+  up.disabled = idx === 0;
+  up.addEventListener('click', () => {
+    chart.actions.splice(idx, 1);
+    chart.actions.splice(idx - 1, 0, action);
+    renderWB();
+  });
+  const down = document.createElement('button');
+  down.className = 'mv'; down.textContent = '↓'; down.title = '下へ';
+  down.disabled = idx === chart.actions.length - 1;
+  down.addEventListener('click', () => {
+    chart.actions.splice(idx, 1);
+    chart.actions.splice(idx + 1, 0, action);
+    renderWB();
+  });
+  const x = document.createElement('button');
+  x.className = 'x'; x.textContent = '×'; x.title = 'このステップを削除';
+  x.addEventListener('click', () => {
+    const sub = subchartOfAction(action.id);
+    if(sub && !confirm('このステップにはサブチャートがあります。サブチャートごと削除しますか？')) return;
+    if(sub) deleteChartCascade(sub);
+    chart.actions = chart.actions.filter(a => a.id !== action.id);
+    renderWB();
+  });
+  row.appendChild(up); row.appendChild(down); row.appendChild(x);
+  div.appendChild(row);
+
+  const meta = document.createElement('div');
+  meta.className = 'step-meta';
+
+  const dueL = document.createElement('label');
+  dueL.append('期日');
+  const due = document.createElement('input');
+  due.type = 'date'; due.value = action.due;
+  due.addEventListener('change', () => {
+    action.due = due.value;
+    const sub = subchartOfAction(action.id);
+    if(sub){ sub.goalDate = due.value; renderWB(); }   // サブチャートの達成期日と同期
+  });
+  dueL.appendChild(due);
+
+  const ownL = document.createElement('label');
+  ownL.append('責任者');
+  const own = document.createElement('select');
+  ensureMembers();
+  const opts = [''].concat(db.members);
+  if(action.owner && !opts.includes(action.owner)) opts.push(action.owner);
+  opts.forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name || '─';
+    own.appendChild(o);
+  });
+  const oNew = document.createElement('option');
+  oNew.value = '__new__'; oNew.textContent = '＋ 追加…';
+  own.appendChild(oNew);
+  own.value = action.owner || '';
+  own.addEventListener('change', () => {
+    if(own.value === '__new__'){
+      const name = (prompt('メンバー名') || '').trim();
+      if(name && !db.members.includes(name)) db.members.push(name);
+      action.owner = name || action.owner || '';
+      renderWB(); return;
+    }
+    action.owner = own.value;
+  });
+  ownL.appendChild(own);
+
+  const sub = subchartOfAction(action.id);
+  const drill = document.createElement('button');
+  drill.className = 'drill';
+  drill.textContent = sub ? '→ チャートへ' : '⊕ チャート化';
+  drill.addEventListener('click', () => {
+    let target = subchartOfAction(action.id);
+    if(!target){
+      target = newChart(action.id, action.text);
+      // 親のアクションを言い換えずそのまま子チャートの頂点に降ろす
+      if(action.text.trim()) target.goalItems = [action.text.trim()];
+      if(action.due) target.goalDate = action.due;
+      db.charts[target.id] = target;
+      renderWB(() => centerOn(target.id));
+    } else {
+      centerOn(target.id);
+    }
+  });
+
+  meta.appendChild(dueL);
+  meta.appendChild(ownL);
+  meta.appendChild(drill);
+  div.appendChild(meta);
+  return div;
+}
+
+function wbCardEl(chart){
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.dataset.chartId = chart.id;
+
+  const head = document.createElement('div');
+  head.className = 'card-head';
+  const num = document.createElement('span');
+  num.className = 'card-num';
+  num.textContent = chart.parentActionId ? chartNumber(chart) : 'M';
+  const ttl = document.createElement('span');
+  ttl.className = 'card-ttl';
+  if(chart.parentActionId){
+    const parent = parentChartOf(chart);
+    const act = parent && parent.actions.find(a => a.id === chart.parentActionId);
+    const name = (act && act.text.trim()) || '';
+    ttl.textContent = name || '（無題のステップ）';
+    ttl.classList.toggle('untitled', !name);
+  } else {
+    ttl.textContent = 'マスターチャート';
+  }
+  head.appendChild(num); head.appendChild(ttl);
+  div.appendChild(head);
+
+  div.appendChild(wbPole('vision', chart));
+
+  const steps = document.createElement('div');
+  steps.className = 'steps';
+  const sl = document.createElement('div');
+  sl.className = 'steps-label';
+  sl.textContent = '行動ステップ';
+  steps.appendChild(sl);
+  chart.actions.forEach((a, i) => {
+    const prefix = chartNumber(chart);
+    const n = prefix ? `${prefix}-${i + 1}` : String(i + 1);
+    steps.appendChild(wbStepEl(chart, a, n));
+  });
+  const add = document.createElement('button');
+  add.className = 'add-step';
+  add.textContent = '＋ アクションステップ';
+  add.addEventListener('click', () => {
+    chart.actions.push(newAction());
+    renderWB(() => {
+      const card = cardById(chart.id);
+      const tas = card ? card.querySelectorAll('.step .step-row textarea') : [];
+      if(tas.length) tas[tas.length - 1].focus();
+    });
+  });
+  steps.appendChild(add);
+  div.appendChild(steps);
+
+  div.appendChild(wbPole('reality', chart));
+  return div;
+}
+
+/* ================= モード切り替え ================= */
+let mode = 'text';   // 'text' | 'board'
+function renderActive(){
+  if(mode === 'board') renderWB(); else render();
+}
+function setMode(m){
+  mode = m;
+  document.body.classList.toggle('wb', m === 'board');
+  renderActive();   // 同じ db を使うので、切り替えのたびに再描画すれば常に同期する
+}
+document.getElementById('btn-mode-board').addEventListener('click', () => setMode('board'));
+document.getElementById('btn-mode-text').addEventListener('click', () => setMode('text'));
+
+/* ================= save / load（両モード共通） ================= */
+const fileInput = document.getElementById('file-input');
+function saveJSON(){
   const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1015,12 +1655,8 @@ document.getElementById('btn-save').addEventListener('click', () => {
   a.download = `tension-chart-${d}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-});
-document.getElementById('btn-load').addEventListener('click', () =>
-  document.getElementById('file-input').click());
-document.getElementById('file-input').addEventListener('change', e => {
-  const f = e.target.files[0];
-  if(!f) return;
+}
+function loadFile(f){
   const r = new FileReader();
   r.onload = () => {
     try{
@@ -1031,21 +1667,38 @@ document.getElementById('file-input').addEventListener('change', e => {
       reconcileDates();
       ensureMembers();
       ownerFilter = '';
-      render();
+      wbPendingFit = true;
+      renderActive();
     }catch(err){
       alert('読み込めませんでした：緊張構造チャートのJSONファイルを選んでください');
     }
   };
   r.readAsText(f);
+}
+document.getElementById('btn-save').addEventListener('click', saveJSON);
+document.getElementById('wb-save').addEventListener('click', saveJSON);
+document.getElementById('btn-load').addEventListener('click', () => fileInput.click());
+document.getElementById('wb-load').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(f) loadFile(f);
   e.target.value = '';
 });
+/* ホワイトボードにJSONファイルをドロップして読み込み */
+$board.addEventListener('dragover', e => e.preventDefault());
+$board.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f && /\.json$/i.test(f.name)) loadFile(f);
+});
 
+applyView();
 render();
 </script>
 
 <script>
 /* ================= Supabase 同期レイヤー ================= */
-const SUPABASE_URL      = 'https://kzzdsibwjvocbihfqtlv.supabase.co';   // ★プロジェクトURL
+const SUPABASE_URL      = 'https://kzzdsibwjvocbihfqtlv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_n2qWIOJzVfrzjYANDe4UzA_O4dLVmZ1';
 const CHART_ID          = 'rfc-2026-2027';
 
@@ -1082,6 +1735,7 @@ async function refreshWhoami(){
   }
   el.textContent = currentEmail;
 }
+
 async function loadRemote(){
   await refreshWhoami();
   setStatus('読み込み中…');
@@ -1098,11 +1752,11 @@ async function loadRemote(){
     reconcileDates(); ensureMembers();
     lastRemoteTs = row.updated_at;
   } else {
-    // 初回：現在のローカル状態をクラウドの初期データにする
     await saveRemote(true);
   }
   lastSavedJson = JSON.stringify(db);
-  render();
+  wbPendingFit = true;
+  renderActive();
   setStatus('同期済み');
 }
 
@@ -1123,13 +1777,11 @@ async function saveRemote(isFirst){
   setStatus('保存済み ' + t.getHours() + ':' + String(t.getMinutes()).padStart(2,'0'));
 }
 
-/* 変更検知の自動保存（2.5秒ごとに差分チェック） */
 setInterval(() => {
   if(saving || lastSavedJson === null) return;
   if(JSON.stringify(db) !== lastSavedJson) saveRemote();
 }, 2500);
 
-/* 他のメンバーの更新を取り込む（30秒ごと、自分に未保存変更がない時だけ） */
 setInterval(async () => {
   if(lastRemoteTs === null || saving) return;
   if(JSON.stringify(db) !== lastSavedJson) return;
