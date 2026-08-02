@@ -277,6 +277,12 @@ body.wb #wb-ui{display:block}
   padding:10px 18px;margin:0;
 }
 #wb-toolbar h1{font-size:1.02rem}
+.card.wb-chip{
+  padding:7px 12px;font-size:.72rem;color:var(--muted);white-space:nowrap;
+  opacity:.55;cursor:pointer;width:auto;
+}
+.card.wb-chip:hover{opacity:1;border-color:var(--ink)}
+.card.wb-chip .card-num{margin-right:7px;font-size:.7rem}
 .card.mini{cursor:pointer}
 .card.mini:hover{border-color:var(--ink)}
 .card.mini .mini-body{display:flex;flex-direction:column;gap:6px;padding:4px 2px 2px}
@@ -401,8 +407,6 @@ body.wb #wb-ui{display:block}
     <h1>緊張構造チャート<span class="ver">ホワイトボード</span></h1>
     <div class="file-actions">
       <button class="btn" id="btn-mode-text">テキスト表示</button>
-      <button class="btn" id="btn-wb-detail">コンパクト表示</button>
-      <button class="btn" id="btn-wb-layout">横に展開</button>
       <button class="btn" id="wb-save">保存（JSON）</button>
       <button class="btn" id="wb-load">読み込み</button>
       <span class="zoomgrp">
@@ -1245,21 +1249,24 @@ function centerOn(chartId){
 const CARD_W = 440, GAP_X = 150, GAP_Y = 70, WB_ORIGIN = 80;
 let wbCompact = false;                // 既定は詳細表示
 const wbExpanded = new Set();         // 個別に展開したカード
-let wbVertical = true;                // 既定は縦（マスターを頂点に下へ広がる）
+const wbVertical = false;             // 横ツリー固定（フォーカス連動で密度を制御）
 const GAP_SIB = 60, GAP_LV = 120;
-document.getElementById('btn-wb-layout').addEventListener('click', () => {
-  wbVertical = !wbVertical;
-  document.getElementById('btn-wb-layout').textContent = wbVertical ? '横に展開' : '縦に展開';
-  wbPendingFit = true;
-  renderWB();
-});
-document.getElementById('btn-wb-detail').addEventListener('click', () => {
-  wbCompact = !wbCompact;
-  wbExpanded.clear();
-  document.getElementById('btn-wb-detail').textContent = wbCompact ? '詳細表示' : 'コンパクト表示';
-  wbPendingFit = true;
-  renderWB();
-});
+/* ---- フォーカス連動セマンティックズーム ---- */
+let wbFocusId = null;
+function wbLevelOf(chart){
+  if(!wbFocusId) return 'det';
+  if(chart.id === wbFocusId) return 'det';
+  const f = chartOf(wbFocusId);
+  if(!f) return 'det';
+  const p = parentChartOf(f);
+  if(p && chart.id === p.id) return 'med';
+  if(kidsOf(f).some(k => k.id === chart.id)) return 'med';
+  return 'chip';
+}
+function wbSetFocus(id){
+  wbFocusId = id;
+  renderWB(() => centerOn(id));
+}
 let wbPos = new Map();   // chartId -> {x, y, w, h}
 
 const cardById = id => $canvas.querySelector(`.card[data-chart-id="${id}"]`);
@@ -1348,11 +1355,12 @@ function wbDrawEdges(){
     if(!pp || !cp || !pEl || !cEl) return;
     const row = pEl.querySelector(`[data-action-id="${chart.parentActionId}"]`);
     const vision = cEl.querySelector('.pole.vision');
-    if(!row || !vision) return;
     const pr = pEl.getBoundingClientRect();
-    const rr = row.getBoundingClientRect();
+    const rr = row ? row.getBoundingClientRect() : pr;
     const cr = cEl.getBoundingClientRect();
-    const vr = vision.getBoundingClientRect();
+    const vr = vision ? vision.getBoundingClientRect() : cr;
+    const lvP = wbLevelOf(parent), lvC = wbLevelOf(chart);
+    const near = lvP !== 'chip' || lvC !== 'chip';
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     if(wbVertical){
       const sy = pp.y + (rr.top - pr.top + rr.height / 2) / wbView.k;
@@ -1372,10 +1380,10 @@ function wbDrawEdges(){
     }
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', '#9A2827');
-    path.setAttribute('stroke-width', '1.6');
+    path.setAttribute('stroke-width', near ? '1.6' : '1');
+    path.setAttribute('opacity', near ? '.8' : '.25');
     path.setAttribute('stroke-dasharray', '6 5');
     path.setAttribute('marker-end', 'url(#arrw)');
-    path.setAttribute('opacity', '.8');
     $edgePaths.appendChild(path);
   });
 }
@@ -1394,6 +1402,7 @@ function wbScheduleLayout(){
 let wbPendingFit = true;   // 初回表示とJSON読み込み後に全体表示する
 
 function renderWB(afterLayout){
+  if(!wbFocusId || !db.charts[wbFocusId]) wbFocusId = db.rootId;
   $canvas.querySelectorAll('.card').forEach(el => el.remove());
   const root = chartOf(db.rootId);
   if(root){
@@ -1715,16 +1724,43 @@ function wbMiniCardEl(chart){
   }
   div.appendChild(body);
 
-  div.title = 'クリックで展開';
-  div.addEventListener('click', () => {
-    wbExpanded.add(chart.id);
-    renderWB();
-  });
+  div.title = 'クリックでフォーカス／ダブルクリックでテキスト編集';
+  div.addEventListener('click', () => wbSetFocus(chart.id));
+  div.addEventListener('dblclick', () => wbOpenText(chart.id));
   return div;
 }
 
+function wbChipEl(chart){
+  const div = document.createElement('div');
+  div.className = 'card wb-chip';
+  div.dataset.chartId = chart.id;
+  const num = document.createElement('span');
+  num.className = 'card-num';
+  num.textContent = chart.parentActionId ? chartNumber(chart) : 'M';
+  div.appendChild(num);
+  let name = 'マスターチャート';
+  if(chart.parentActionId){
+    const parent = parentChartOf(chart);
+    const act = parent && parent.actions.find(a => a.id === chart.parentActionId);
+    name = (act && act.text.trim()) || chart.title || '（無題のステップ）';
+  }
+  div.append(name);
+  div.title = 'クリックでフォーカス';
+  div.addEventListener('click', () => wbSetFocus(chart.id));
+  div.addEventListener('dblclick', () => wbOpenText(chart.id));
+  return div;
+}
+
+function wbOpenText(chartId){
+  currentId = chartId;
+  viewMode = 'chart';
+  setMode('text');
+}
+
 function wbCardEl(chart){
-  if(wbCompact && !wbExpanded.has(chart.id)) return wbMiniCardEl(chart);
+  const lv = wbLevelOf(chart);
+  if(lv === 'chip') return wbChipEl(chart);
+  if(lv === 'med') return wbMiniCardEl(chart);
   const div = document.createElement('div');
   div.className = 'card';
   div.dataset.chartId = chart.id;
@@ -1802,7 +1838,13 @@ function renderActive(){
 function setMode(m){
   mode = m;
   document.body.classList.toggle('wb', m === 'board');
-  renderActive();   // 同じ db を使うので、切り替えのたびに再描画すれば常に同期する
+  if(m === 'board'){
+    // テキストで見ていたチャートにフォーカスを引き継ぐ
+    wbFocusId = (currentId && db.charts[currentId]) ? currentId : db.rootId;
+    renderWB(() => centerOn(wbFocusId));
+    return;
+  }
+  renderActive();
 }
 document.getElementById('btn-mode-board').addEventListener('click', () => setMode('board'));
 document.getElementById('btn-mode-text').addEventListener('click', () => setMode('text'));
