@@ -401,7 +401,8 @@ body.wb #wb-ui{display:block}
     <h1>緊張構造チャート<span class="ver">ホワイトボード</span></h1>
     <div class="file-actions">
       <button class="btn" id="btn-mode-text">テキスト表示</button>
-      <button class="btn" id="btn-wb-detail">詳細表示</button>
+      <button class="btn" id="btn-wb-detail">コンパクト表示</button>
+      <button class="btn" id="btn-wb-layout">横に展開</button>
       <button class="btn" id="wb-save">保存（JSON）</button>
       <button class="btn" id="wb-load">読み込み</button>
       <span class="zoomgrp">
@@ -1242,8 +1243,16 @@ function centerOn(chartId){
 
 /* ---- ツリー自動配置 ---- */
 const CARD_W = 440, GAP_X = 150, GAP_Y = 70, WB_ORIGIN = 80;
-let wbCompact = true;                 // 既定はコンパクト（俯瞰用）
+let wbCompact = false;                // 既定は詳細表示
 const wbExpanded = new Set();         // 個別に展開したカード
+let wbVertical = true;                // 既定は縦（マスターを頂点に下へ広がる）
+const GAP_SIB = 60, GAP_LV = 120;
+document.getElementById('btn-wb-layout').addEventListener('click', () => {
+  wbVertical = !wbVertical;
+  document.getElementById('btn-wb-layout').textContent = wbVertical ? '横に展開' : '縦に展開';
+  wbPendingFit = true;
+  renderWB();
+});
 document.getElementById('btn-wb-detail').addEventListener('click', () => {
   wbCompact = !wbCompact;
   wbExpanded.clear();
@@ -1255,10 +1264,45 @@ let wbPos = new Map();   // chartId -> {x, y, w, h}
 
 const cardById = id => $canvas.querySelector(`.card[data-chart-id="${id}"]`);
 
+function wbLayoutV(root){
+  const M = new Map();  // chartId -> {subW, totalW, h}
+  function measure(chart){
+    const el = cardById(chart.id);
+    const h = el ? el.offsetHeight : 0;
+    const kids = kidsOf(chart);
+    let totalW = 0;
+    kids.forEach((k, i) => { totalW += measure(k); if(i > 0) totalW += GAP_SIB; });
+    const subW = Math.max(CARD_W, totalW);
+    M.set(chart.id, { subW, totalW, h });
+    return subW;
+  }
+  measure(root);
+  function place(chart, x, y){
+    const m = M.get(chart.id);
+    const el = cardById(chart.id);
+    const cx = x + (m.subW - CARD_W) / 2;
+    if(el){ el.style.left = cx + 'px'; el.style.top = y + 'px'; }
+    wbPos.set(chart.id, { x: cx, y, w: CARD_W, h: m.h });
+    let xx = x + (m.subW - m.totalW) / 2;
+    const y2 = y + m.h + GAP_LV;
+    kidsOf(chart).forEach(k => {
+      place(k, xx, y2);
+      xx += M.get(k.id).subW + GAP_SIB;
+    });
+  }
+  place(root, WB_ORIGIN, WB_ORIGIN);
+  const b = contentBounds();
+  if(b){
+    $edges.setAttribute('width',  b.x + b.w + 200);
+    $edges.setAttribute('height', b.y + b.h + 200);
+  }
+}
+
 function wbLayout(){
   wbPos.clear();
   const root = chartOf(db.rootId);
   if(!root) return;
+  if(wbVertical){ wbLayoutV(root); return; }
   const M = new Map();  // chartId -> {sub, total, h}
   function measure(chart){
     const el = cardById(chart.id);
@@ -1309,13 +1353,23 @@ function wbDrawEdges(){
     const rr = row.getBoundingClientRect();
     const cr = cEl.getBoundingClientRect();
     const vr = vision.getBoundingClientRect();
-    const sy = pp.y + (rr.top - pr.top + rr.height / 2) / wbView.k;
-    const sx = pp.x + pp.w;
-    const ey = cp.y + (vr.top - cr.top + vr.height / 2) / wbView.k;
-    const ex = cp.x;
-    const dx = Math.max(40, (ex - sx) / 2);
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', `M ${sx} ${sy} C ${sx + dx} ${sy}, ${ex - dx} ${ey}, ${ex - 4} ${ey}`);
+    if(wbVertical){
+      const sy = pp.y + (rr.top - pr.top + rr.height / 2) / wbView.k;
+      const goRight = cp.x + cp.w / 2 >= pp.x + pp.w / 2;
+      const sx = goRight ? pp.x + pp.w : pp.x;
+      const ex = cp.x + cp.w / 2;
+      const ey = cp.y;
+      const dir = goRight ? 1 : -1;
+      path.setAttribute('d', `M ${sx} ${sy} C ${sx + dir * 70} ${sy}, ${ex} ${ey - 70}, ${ex} ${ey - 4}`);
+    } else {
+      const sy = pp.y + (rr.top - pr.top + rr.height / 2) / wbView.k;
+      const sx = pp.x + pp.w;
+      const ey = cp.y + (vr.top - cr.top + vr.height / 2) / wbView.k;
+      const ex = cp.x;
+      const dx = Math.max(40, (ex - sx) / 2);
+      path.setAttribute('d', `M ${sx} ${sy} C ${sx + dx} ${sy}, ${ex - dx} ${ey}, ${ex - 4} ${ey}`);
+    }
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', '#9A2827');
     path.setAttribute('stroke-width', '1.6');
