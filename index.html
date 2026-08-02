@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>緊張構造チャート</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="緊張構造チャート">
+<meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -277,6 +283,12 @@ body.wb #wb-ui{display:block}
   padding:10px 18px;margin:0;
 }
 #wb-toolbar h1{font-size:1.02rem}
+#board .card.wide{width:960px}
+#board .card.wide .pole ul.items{columns:2;column-gap:36px}
+#board .card.wide .pole ul.items li{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid}
+#board .card.wide .steps{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;align-items:start}
+#board .card.wide .steps .steps-label,#board .card.wide .steps .add-step,
+#board .card.wide .steps .sort-btn{grid-column:1 / -1}
 .card.wb-chip{
   padding:7px 12px;font-size:.72rem;color:var(--muted);white-space:nowrap;
   opacity:.55;cursor:pointer;width:auto;
@@ -1310,15 +1322,16 @@ function wbLayout(){
   const root = chartOf(db.rootId);
   if(!root) return;
   if(wbVertical){ wbLayoutV(root); return; }
-  const M = new Map();  // chartId -> {sub, total, h}
+  const M = new Map();  // chartId -> {sub, total, h, w}
   function measure(chart){
     const el = cardById(chart.id);
     const h = el ? el.offsetHeight : 0;
+    const w = el ? (el.offsetWidth || CARD_W) : CARD_W;
     const kids = kidsOf(chart);
     let total = 0;
     kids.forEach((k, i) => { total += measure(k); if(i > 0) total += GAP_Y; });
     const sub = Math.max(h, total);
-    M.set(chart.id, { sub, total, h });
+    M.set(chart.id, { sub, total, h, w });
     return sub;
   }
   measure(root);
@@ -1327,10 +1340,10 @@ function wbLayout(){
     const el = cardById(chart.id);
     const cy = y + (m.sub - m.h) / 2;
     if(el){ el.style.left = x + 'px'; el.style.top = cy + 'px'; }
-    wbPos.set(chart.id, { x, y: cy, w: CARD_W, h: m.h });
+    wbPos.set(chart.id, { x, y: cy, w: m.w, h: m.h });
     let yy = y + (m.sub - m.total) / 2;
     kidsOf(chart).forEach(k => {
-      place(k, x + CARD_W + GAP_X, yy);
+      place(k, x + m.w + GAP_X, yy);
       yy += M.get(k.id).sub + GAP_Y;
     });
   }
@@ -1762,7 +1775,7 @@ function wbCardEl(chart){
   if(lv === 'chip') return wbChipEl(chart);
   if(lv === 'med') return wbMiniCardEl(chart);
   const div = document.createElement('div');
-  div.className = 'card';
+  div.className = 'card' + (!chart.parentActionId ? ' wide' : '');
   div.dataset.chartId = chart.id;
 
   const head = document.createElement('div');
