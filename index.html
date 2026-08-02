@@ -215,6 +215,13 @@ ul.items li:hover .lv,ul.items li:focus-within .lv{visibility:visible}
   font-family:inherit;font-size:.82rem;padding:6px 22px;border-radius:999px;cursor:pointer;
 }
 .add-step:hover{color:var(--action);border-color:var(--action)}
+.sort-btn{
+  position:absolute;right:0;top:10px;z-index:1;
+  font-family:inherit;font-size:.72rem;letter-spacing:.06em;
+  border:1px solid var(--line);background:var(--paper);color:var(--muted);
+  padding:2px 12px;border-radius:999px;cursor:pointer;
+}
+.sort-btn:hover{color:var(--ink);border-color:var(--ink)}
 
 
 /* ---------- overview (whole tree) ---------- */
@@ -947,6 +954,23 @@ function renderChart(){
   sl.className = 'steps-label'; sl.textContent = '望む成果と今のリアリティの間で、緊張が解消に向かう';
   steps.appendChild(sl);
 
+  if(chart.actions.length > 1){
+    const sortBtn = document.createElement('button');
+    sortBtn.className = 'sort-btn';
+    const dueKey = a => a.due || '9999-99-99';           // 期日なしは常に末尾
+    const isAsc = chart.actions.every((a, i, arr) => i === 0 || dueKey(arr[i-1]) <= dueKey(a));
+    sortBtn.textContent = isAsc ? '期日 ↓ 遅い順' : '期日 ↑ 早い順';
+    sortBtn.title = '期日で並べ替え（もう一度押すと逆順）';
+    sortBtn.addEventListener('click', () => {
+      const undated = chart.actions.filter(a => !a.due);
+      const dated = chart.actions.filter(a => a.due);
+      dated.sort((a, b) => isAsc ? b.due.localeCompare(a.due) : a.due.localeCompare(b.due));
+      chart.actions = dated.concat(undated);
+      render();
+    });
+    steps.appendChild(sortBtn);
+  }
+
   const prefix = chartNumber(chart);
   chart.actions.forEach((a, i) => {
     const num = prefix ? `${prefix}-${i + 1}` : String(i + 1);
@@ -1022,7 +1046,7 @@ render();
 <script>
 /* ================= Supabase 同期レイヤー ================= */
 const SUPABASE_URL      = 'https://kzzdsibwjvocbihfqtlv.supabase.co';   // ★プロジェクトURL
-const SUPABASE_ANON_KEY = 'sb_publishable_n2qWIOJzVfrzjYANDe4UzA_O4dLVmZ1';                        // ★Settings > API > anon public
+const SUPABASE_ANON_KEY = 'ここにanonキーを貼る';                        // ★Settings > API > anon public
 const CHART_ID          = 'rfc-2026-2027';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
