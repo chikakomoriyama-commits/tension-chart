@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>緊張構造チャート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FFFFFF;
+  --card:#FFFFFF;
+  --ink:#000000;         /* RFC ink black */
+  --muted:#767470;
+  --line:#E4E4E1;
+  --vision:#000000;      /* 望む成果 = インクブラック */
+  --vision-soft:#F2F2F1;
+  --reality:#5E6763;     /* 今のリアリティ = セージグレー系 */
+  --reality-soft:#DCE1E1;/* RFC パネル色 */
+  --action:#9A2827;      /* FBS 赤 = 行動の色 */
+  --arrow:#CFD7D5;       /* テンションの矢印（セージ淡色）*/
+  --danger:#9A2827;
+  font-size:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Noto Sans JP',sans-serif;
+  line-height:1.7;
+  padding:32px 20px 80px;
+}
+.wrap{max-width:760px;margin:0 auto}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.brand-logo{height:26px;width:auto;display:block;margin-bottom:8px}
+h1{font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.08em}
+.file-actions{display:flex;gap:8px}
+.btn{
+  font-family:inherit;font-size:.8rem;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+  padding:6px 16px;border-radius:0;cursor:pointer;transition:border-color .15s;
+}
+.btn:hover{border-color:var(--muted)}
+.btn:focus-visible{outline:2px solid var(--vision);outline-offset:2px}
+
+/* ---------- breadcrumb (telescoping path) ---------- */
+nav.crumbs{
+  display:flex;align-items:center;flex-wrap:wrap;gap:4px;
+  margin:18px 0 34px;font-size:.85rem;color:var(--muted);
+}
+nav.crumbs button{
+  font-family:inherit;font-size:inherit;background:none;border:none;cursor:pointer;
+  color:var(--vision);padding:2px 4px;border-radius:4px;max-width:220px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+nav.crumbs button:hover{text-decoration:underline}
+nav.crumbs .sep{color:var(--line);user-select:none}
+nav.crumbs .here{color:var(--ink);font-weight:500;padding:2px 4px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- chart body & tension line ---------- */
+.chart{position:relative}
+
+.pole{
+  position:relative;z-index:1;background:var(--card);
+  border:1px solid var(--line);border-radius:0;padding:22px 26px 18px;
+}
+.pole.vision{border-top:3px solid var(--vision)}
+.pole.reality{background:var(--reality-soft);border-color:var(--reality-soft);border-bottom:3px solid var(--reality)}
+.pole-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.pole-label{
+  font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.18em;
+}
+.vision .pole-label{color:var(--vision)}
+.reality .pole-label{color:var(--reality)}
+.date-field{display:flex;align-items:baseline;gap:6px;font-size:.8rem;color:var(--muted)}
+.date-field input[type="date"]{
+  font-family:inherit;font-size:.85rem;color:var(--ink);
+  border:none;border-bottom:1px solid var(--line);background:none;padding:2px 0;
+}
+.date-field input[type="date"]:focus{outline:none;border-bottom-color:var(--vision)}
+
+/* bullet list */
+ul.items{list-style:none;margin-top:8px}
+ul.items li{display:flex;align-items:flex-start;gap:10px;padding:3px 0}
+ul.items li::before{content:"・";color:var(--muted);line-height:1.7;flex:none}
+ul.items li[data-lv="1"]{padding-left:1.3em}
+ul.items li[data-lv="1"]::before{content:"−"}
+ul.items li[data-lv="2"]{padding-left:2.6em}
+ul.items li[data-lv="2"]::before{content:"・";opacity:.55}
+ul.items textarea{
+  flex:1;font-family:inherit;font-size:.95rem;line-height:1.7;color:var(--ink);
+  border:none;background:none;resize:none;overflow:hidden;padding:0;
+}
+ul.items textarea:focus{outline:none}
+ul.items li .x,ul.items li .lv{visibility:hidden}
+ul.items li:hover .x,ul.items li:focus-within .x,
+ul.items li:hover .lv,ul.items li:focus-within .lv{visibility:visible}
+.lv{flex:none;border:none;background:none;cursor:pointer;color:var(--muted);
+  font-size:.8rem;line-height:1.7;padding:0 1px}
+.lv:hover{color:var(--ink)}
+.x{
+  flex:none;border:none;background:none;cursor:pointer;color:var(--muted);
+  font-size:.85rem;line-height:1.7;padding:0 2px;
+}
+.x:hover{color:var(--danger)}
+.mv{
+  flex:none;border:none;background:none;cursor:pointer;color:var(--muted);
+  font-size:.75rem;line-height:1.7;padding:0 2px;
+}
+.mv:hover{color:var(--ink)}
+.mv:disabled{opacity:.25;cursor:default}
+.add-item{
+  margin-top:6px;border:none;background:none;cursor:pointer;
+  font-family:inherit;font-size:.8rem;color:var(--muted);padding:2px 0;
+}
+.add-item:hover{color:var(--vision)}
+
+/* ---------- action steps ---------- */
+.steps{position:relative;z-index:1;padding:48px 0 34px;display:flex;flex-direction:column;gap:12px}
+/* 下から上へ向かう太いテンションの矢印 */
+.steps::before{ /* 矢じり */
+  content:"";position:absolute;top:2px;left:50%;transform:translateX(-50%);
+  border-left:26px solid transparent;border-right:26px solid transparent;
+  border-bottom:30px solid var(--arrow);
+}
+.steps::after{ /* 軸 */
+  content:"";position:absolute;top:30px;bottom:0;left:50%;transform:translateX(-50%);
+  width:18px;background:var(--arrow);
+}
+.steps-label{
+  position:relative;z-index:1;align-self:center;background:var(--paper);padding:2px 14px;
+  font-size:.75rem;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;
+}
+.step{
+  position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-radius:0;
+  padding:12px 16px 10px 20px;margin:0 24px;
+}
+.pill{
+  flex:none;font-family:inherit;font-size:.68rem;letter-spacing:.1em;
+  border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:999px;padding:1px 10px;cursor:pointer;margin-top:4px;transition:all .12s;
+}
+.pill:hover{border-color:var(--ink);color:var(--ink)}
+.pill.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.ov-line .pill{margin-top:0;padding:0 8px}
+.step.is-done .step-row textarea{color:var(--muted);text-decoration:line-through}
+.step.is-done .ov-num{color:var(--muted)}
+.ov-line.is-done .ov-text,.ov-line.is-done .ov-num{color:var(--muted)}
+.ov-line.is-done .ov-text{text-decoration:line-through}
+.step-row{display:flex;align-items:flex-start;gap:10px}
+.step-row textarea{
+  flex:1;font-family:inherit;font-size:.95rem;line-height:1.6;color:var(--ink);
+  border:none;background:none;resize:none;overflow:hidden;padding:2px 0;
+}
+.step-row textarea:focus{outline:none}
+.step-meta{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px;
+  font-size:.78rem;color:var(--muted);
+}
+.step-meta label{display:flex;align-items:baseline;gap:5px}
+.step-meta input{
+  font-family:inherit;font-size:.82rem;color:var(--ink);
+  border:none;border-bottom:1px solid var(--line);background:none;padding:1px 0;
+}
+.step-meta input[type="text"]{width:9em}
+.step-meta input:focus{outline:none;border-bottom-color:var(--vision)}
+.step-meta select{
+  font-family:inherit;font-size:.82rem;color:var(--ink);
+  border:none;border-bottom:1px solid var(--line);background:none;padding:1px 0;cursor:pointer;
+}
+.step-meta select:focus{outline:none;border-bottom-color:var(--vision)}
+.ov-filter{display:flex;justify-content:flex-end;align-items:center;gap:8px;
+  font-size:.78rem;color:var(--muted);margin-bottom:12px}
+.ov-filter select{font-family:inherit;font-size:.82rem;color:var(--ink);
+  border:none;border-bottom:1px solid var(--line);background:none;padding:1px 0;cursor:pointer}
+.ov-missing{
+  display:block;font-family:inherit;font-size:.72rem;color:var(--action);
+  background:none;border:none;cursor:pointer;padding:2px 0 0;text-align:left;
+}
+.ov-missing:hover{text-decoration:underline}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);
+  display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:50}
+.modal{background:var(--card);border:1px solid var(--line);padding:22px 26px;
+  width:min(430px,92vw);max-height:72vh;overflow:auto}
+.modal h2{font-size:.95rem;font-weight:700;letter-spacing:.12em;margin-bottom:12px}
+.member-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.member-row .name{flex:1;font-size:.92rem}
+.mini{font-family:inherit;font-size:.72rem;border:1px solid var(--line);background:var(--card);
+  color:var(--muted);padding:2px 10px;border-radius:999px;cursor:pointer}
+.mini:hover{border-color:var(--ink);color:var(--ink)}
+.mini.danger:hover{border-color:var(--danger);color:var(--danger)}
+.member-add{display:flex;gap:8px;margin-top:14px}
+.member-add input{flex:1;font-family:inherit;font-size:.9rem;border:none;
+  border-bottom:1px solid var(--line);background:none;padding:3px 0}
+.member-add input:focus{outline:none;border-bottom-color:var(--ink)}
+.modal-close{margin-top:16px;text-align:right}
+.drill{
+  margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+  font-family:inherit;font-size:.78rem;letter-spacing:.03em;
+  border:1px solid var(--action);background:var(--card);color:var(--action);
+  padding:3px 14px;border-radius:999px;cursor:pointer;transition:all .15s;
+}
+.drill:hover{background:var(--action);color:#fff}
+.drill:hover .count{background:#fff;color:var(--action)}
+.drill .count{
+  background:var(--action);color:#fff;border-radius:999px;
+  font-size:.68rem;padding:0 6px;line-height:1.5;
+}
+.add-step{
+  position:relative;z-index:1;align-self:center;margin:2px 0 0;
+  border:1px dashed var(--line);background:var(--paper);color:var(--muted);
+  font-family:inherit;font-size:.82rem;padding:6px 22px;border-radius:999px;cursor:pointer;
+}
+.add-step:hover{color:var(--action);border-color:var(--action)}
+
+
+/* ---------- overview (whole tree) ---------- */
+.overview{background:var(--card);border:1px solid var(--line);border-radius:0;padding:26px 28px}
+.ov-root{font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;color:var(--vision);margin-bottom:4px}
+.ov-root-goal{font-size:.85rem;color:var(--muted);margin-bottom:14px}
+.ov-goal{font-size:.82rem;color:var(--vision);margin:2px 0 4px}
+.ov-goal .cap,.ov-reality .cap{font-weight:700;letter-spacing:.08em;margin-right:.5em}
+.ov-goal ul,.ov-reality ul{list-style:none;margin:1px 0 0;display:inline}
+.ov-goal li,.ov-reality li{display:block;padding-left:1.1em;text-indent:-1.1em}
+.ov-goal li[data-lv="1"],.ov-reality li[data-lv="1"]{padding-left:2.2em}
+.ov-goal li[data-lv="2"],.ov-reality li[data-lv="2"]{padding-left:3.3em}
+.ov-goal li::before,.ov-reality li::before{content:"・"}
+.ov-reality{font-size:.82rem;color:var(--reality);margin:4px 0 2px;border-top:1px dashed var(--line);padding-top:5px}
+.ov-branch{margin-left:0}
+.ov-branch .ov-branch{margin-left:22px;border-left:1px solid var(--line);padding-left:18px}
+.ov-step{padding:5px 0}
+.ov-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ov-num{
+  font-family:'Montserrat','Noto Sans JP',sans-serif;font-weight:600;color:var(--vision);
+  font-size:.85rem;letter-spacing:.04em;flex:none;min-width:2.2em;
+}
+.ov-text{
+  font-size:.92rem;background:none;border:none;padding:0;cursor:pointer;
+  font-family:inherit;color:var(--ink);text-align:left;line-height:1.6;
+}
+.ov-text:hover{color:var(--vision);text-decoration:underline}
+.ov-text.untitled{color:var(--muted);font-style:normal}
+.ov-meta{font-size:.72rem;color:var(--muted);flex:none}
+.ov-empty{font-size:.85rem;color:var(--muted);padding:6px 0}
+.btn.active{background:var(--vision);border-color:var(--vision);color:#fff}
+
+input[type="file"]{display:none}
+
+@media (max-width:560px){
+  .step{margin:0 6px}
+  .drill{margin-left:0}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <img class="brand-logo" src="data:image/png;base64,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" alt="Robert Fritz Consulting">
+      <h1>緊張構造チャート</h1>
+    </div>
+    <div class="file-actions">
+      <span id="sync-status" style="font-size:.72rem;color:var(--muted);align-self:center;margin-right:4px"></span>
+      <button class="btn" id="btn-view">全体を見渡す</button>
+      <button class="btn" id="btn-members">メンバー</button>
+      <button class="btn" id="btn-save">保存（JSON）</button>
+      <button class="btn" id="btn-load">読み込み</button>
+      <input type="file" id="file-input" accept=".json,application/json">
+    </div>
+  </header>
+
+  <nav class="crumbs" id="crumbs" aria-label="チャート階層"></nav>
+
+  <main class="chart" id="chart"></main>
+
+</div>
+
+<div id="auth-gate" class="modal-bg" style="display:none">
+  <div class="modal" style="text-align:center">
+    <h2 style="margin-bottom:6px">緊張構造チャート</h2>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:18px">RFCメンバー用。Googleアカウントでログインしてください。</p>
+    <button class="btn" id="btn-login" style="padding:10px 28px">Googleでログイン</button>
+    <p id="auth-msg" style="font-size:.78rem;color:var(--danger);margin-top:12px"></p>
+  </div>
+</div>
+
+<script>
+/* ================= data ================= */
+const newId = () => 'c' + Math.random().toString(36).slice(2, 10);
+
+function newChart(parentActionId, title){
+  return {
+    id: newId(),
+    parentActionId: parentActionId || null,   // action step this chart telescopes from
+    title: title || '',
+    goalDate: '',
+    goalItems: [''],
+    realityDate: '',
+    realityItems: [''],
+    actions: []                               // {id, text, due, owner}
+  };
+}
+function newAction(){
+  return { id: newId(), text: '', due: '', owner: '', done: false };
+}
+
+let db = { charts: {}, rootId: null, members: [] };
+(function init(){
+  const root = newChart(null, 'マスターチャート');
+  db.charts[root.id] = root;
+  db.rootId = root.id;
+})();
+
+let currentId = db.rootId;
+let ownerFilter = '';
+
+/* ---- members ---- */
+function ensureMembers(){
+  if(!db.members) db.members = [];
+  const seen = new Set(db.members);
+  Object.values(db.charts).forEach(c => c.actions.forEach(a => {
+    (a.owner || '').split(/[,、]/).map(x => x.trim()).filter(Boolean).forEach(n => {
+      if(!seen.has(n)){ seen.add(n); db.members.push(n); }
+    });
+  }));
+}
+
+/* ---- relations ---- */
+const chartOf = id => db.charts[id];
+const subchartOfAction = actionId =>
+  Object.values(db.charts).find(c => c.parentActionId === actionId) || null;
+const parentChartOf = chart => {
+  if(!chart.parentActionId) return null;
+  return Object.values(db.charts).find(c => c.actions.some(a => a.id === chart.parentActionId)) || null;
+};
+function deleteChartCascade(chart){
+  chart.actions.forEach(a => {
+    const sub = subchartOfAction(a.id);
+    if(sub) deleteChartCascade(sub);
+  });
+  delete db.charts[chart.id];
+}
+
+/* ================= render ================= */
+const $chart  = document.getElementById('chart');
+const $crumbs = document.getElementById('crumbs');
+const $btnView = document.getElementById('btn-view');
+/* ---- member management (rename/delete propagate to all steps) ---- */
+function ownerTokens(str){ return (str || '').split(/[,、]/).map(x => x.trim()).filter(Boolean); }
+function eachAction(fn){ Object.values(db.charts).forEach(c => c.actions.forEach(fn)); }
+function renameMember(oldName, newName){
+  db.members = db.members.map(m => m === oldName ? newName : m);
+  eachAction(a => {
+    const t = ownerTokens(a.owner);
+    if(t.includes(oldName)) a.owner = t.map(x => x === oldName ? newName : x).join('、');
+  });
+}
+function removeMember(name){
+  db.members = db.members.filter(m => m !== name);
+  eachAction(a => {
+    const t = ownerTokens(a.owner);
+    if(t.includes(name)) a.owner = t.filter(x => x !== name).join('、');
+  });
+  if(ownerFilter === name) ownerFilter = '';
+}
+function memberUsage(name){
+  let n = 0;
+  eachAction(a => { if(ownerTokens(a.owner).includes(name)) n++; });
+  return n;
+}
+function openMembersModal(){
+  ensureMembers();
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.addEventListener('click', e => { if(e.target === bg){ bg.remove(); render(); } });
+  const box = document.createElement('div');
+  box.className = 'modal';
+  const h = document.createElement('h2');
+  h.textContent = 'チームメンバー';
+  box.appendChild(h);
+
+  db.members.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    const nm = document.createElement('span');
+    nm.className = 'name';
+    const used = memberUsage(name);
+    nm.textContent = name + (used ? `（${used}件）` : '');
+    const bR = document.createElement('button');
+    bR.className = 'mini'; bR.textContent = '名前変更';
+    bR.addEventListener('click', () => {
+      const nn = (prompt('新しい名前', name) || '').trim();
+      if(!nn || nn === name) return;
+      renameMember(name, nn);
+      bg.remove(); openMembersModal();
+    });
+    const bD = document.createElement('button');
+    bD.className = 'mini danger'; bD.textContent = '削除';
+    bD.addEventListener('click', () => {
+      const used2 = memberUsage(name);
+      const msg = used2
+        ? `${name} を削除しますか？\n担当している ${used2} 件のステップの責任者欄からも外れます。`
+        : `${name} を削除しますか？`;
+      if(!confirm(msg)) return;
+      removeMember(name);
+      bg.remove(); openMembersModal();
+    });
+    row.appendChild(nm); row.appendChild(bR); row.appendChild(bD);
+    box.appendChild(row);
+  });
+
+  const addRow = document.createElement('div');
+  addRow.className = 'member-add';
+  const inp = document.createElement('input');
+  inp.placeholder = '新しいメンバー名';
+  const bA = document.createElement('button');
+  bA.className = 'mini'; bA.textContent = '追加';
+  const doAdd = () => {
+    const n = inp.value.trim();
+    if(!n) return;
+    if(!db.members.includes(n)) db.members.push(n);
+    bg.remove(); openMembersModal();
+  };
+  bA.addEventListener('click', doAdd);
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) doAdd(); });
+  addRow.appendChild(inp); addRow.appendChild(bA);
+  box.appendChild(addRow);
+
+  const cl = document.createElement('div');
+  cl.className = 'modal-close';
+  const bC = document.createElement('button');
+  bC.className = 'btn'; bC.textContent = '閉じる';
+  bC.addEventListener('click', () => { bg.remove(); render(); });
+  cl.appendChild(bC);
+  box.appendChild(cl);
+
+  bg.appendChild(box);
+  document.body.appendChild(bg);
+}
+document.getElementById('btn-members').addEventListener('click', openMembersModal);
+
+let viewMode = 'chart';   // 'chart' | 'overview'
+
+$btnView.addEventListener('click', () => {
+  viewMode = viewMode === 'chart' ? 'overview' : 'chart';
+  render();
+});
+
+function render(){
+  if(viewMode === 'overview'){
+    $btnView.textContent = 'チャートに戻る';
+    $btnView.classList.add('active');
+    $crumbs.innerHTML = '';
+    $chart.classList.add('no-line');
+    renderOverview();
+  } else {
+    $btnView.textContent = '全体を見渡す';
+    $btnView.classList.remove('active');
+    $chart.classList.remove('no-line');
+    renderCrumbs();
+    renderChart();
+  }
+}
+
+/* ---- overview (whole tree, numbered 1 / 1-1 / 1-1-1) ---- */
+function missingOf(chart){
+  const m = [];
+  if(nonEmpty(chart.goalItems).length === 0) m.push('望む成果');
+  if(!chart.goalDate) m.push('達成期日');
+  if(nonEmpty(chart.realityItems).length === 0) m.push('リアリティ');
+  if(!chart.realityDate) m.push('時点');
+  return m;
+}
+function missingTag(chart){
+  const m = missingOf(chart);
+  if(m.length === 0) return null;
+  const b = document.createElement('button');
+  b.className = 'ov-missing';
+  b.textContent = '未記入：' + m.join('・') + ' →';
+  b.title = 'このチャートを開いて記入する';
+  b.addEventListener('click', () => {
+    currentId = chart.id; viewMode = 'chart'; render(); window.scrollTo({top:0});
+  });
+  return b;
+}
+function subtreeMatchesOwner(a){
+  if(!ownerFilter) return true;
+  if((a.owner || '').includes(ownerFilter)) return true;
+  const sub = subchartOfAction(a.id);
+  if(sub) return sub.actions.some(subtreeMatchesOwner);
+  return false;
+}
+function renderOverview(){
+  $chart.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'overview';
+
+  // 担当者フィルタ
+  ensureMembers();
+  const fb = document.createElement('div');
+  fb.className = 'ov-filter';
+  fb.append('担当者');
+  const sel = document.createElement('select');
+  ['', ...db.members].forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name || '全員';
+    sel.appendChild(o);
+  });
+  sel.value = ownerFilter;
+  sel.addEventListener('change', () => { ownerFilter = sel.value; render(); });
+  fb.appendChild(sel);
+  box.appendChild(fb);
+
+  const root = chartOf(db.rootId);
+  const title = document.createElement('div');
+  title.className = 'ov-root';
+  title.textContent = 'マスターチャート';
+  box.appendChild(title);
+
+  const goalBlock = poleSummary(root, 'goal');
+  if(goalBlock) box.appendChild(goalBlock);
+
+  box.appendChild(overviewBranch(root, ''));
+  $chart.appendChild(box);
+}
+
+function nonEmpty(items){ return (items || []).filter(s => s && s.trim()); }
+function hasContent(chart){
+  return chart.actions.length > 0 ||
+         nonEmpty(chart.realityItems).length > 0 || chart.realityDate;
+}
+
+/* 望む成果 / 今のリアリティ の要約行 */
+function poleSummary(chart, kind){
+  const isGoal = kind === 'goal';
+  const items = nonEmpty(isGoal ? chart.goalItems : chart.realityItems);
+  const date  = isGoal ? chart.goalDate : chart.realityDate;
+  if(items.length === 0 && !date) return null;
+
+  const div = document.createElement('div');
+  div.className = isGoal ? 'ov-goal' : 'ov-reality';
+  const cap = document.createElement('span');
+  cap.className = 'cap';
+  cap.textContent = (isGoal ? '望む成果' : '今のリアリティ') + (date ? `（${date}）` : '');
+  div.appendChild(cap);
+  if(items.length === 1){
+    div.append(parseItem(items[0]).text);
+  } else if(items.length > 1){
+    const ul = document.createElement('ul');
+    items.forEach(t => {
+      const li = document.createElement('li');
+      const pi = parseItem(t);
+      li.dataset.lv = pi.lv;
+      li.textContent = pi.text;
+      ul.appendChild(li);
+    });
+    div.appendChild(ul);
+  }
+  return div;
+}
+
+function overviewBranch(chart, prefix){
+  const branch = document.createElement('div');
+  branch.className = 'ov-branch';
+
+  if(chart.actions.length === 0 && prefix === ''){
+    const e = document.createElement('div');
+    e.className = 'ov-empty';
+    e.textContent = 'まだアクションステップがありません';
+    branch.appendChild(e);
+  }
+
+  chart.actions.forEach((a, i) => {
+    const num = prefix === '' ? String(i + 1) : `${prefix}-${i + 1}`;
+    if(!subtreeMatchesOwner(a)) return;
+    const step = document.createElement('div');
+    step.className = 'ov-step';
+
+    const line = document.createElement('div');
+    line.className = 'ov-line' + (a.done ? ' is-done' : '');
+
+    const pill = document.createElement('button');
+    pill.className = 'pill' + (a.done ? ' on' : '');
+    pill.textContent = a.done ? '✓' : '完了';
+    pill.title = '完了にする／戻す';
+    pill.addEventListener('click', () => { a.done = !a.done; render(); });
+    line.appendChild(pill);
+
+    const numEl = document.createElement('span');
+    numEl.className = 'ov-num';
+    numEl.textContent = num;
+
+    const textBtn = document.createElement('button');
+    textBtn.className = 'ov-text' + (a.text.trim() ? '' : ' untitled');
+    textBtn.textContent = a.text.trim() || '（無題のステップ）';
+    textBtn.title = 'このステップのチャートへ移動';
+    textBtn.addEventListener('click', () => {
+      const sub = subchartOfAction(a.id);
+      currentId = sub ? sub.id : chart.id;
+      viewMode = 'chart';
+      render();
+      window.scrollTo({top: 0});
+    });
+
+    const meta = document.createElement('span');
+    meta.className = 'ov-meta';
+    const bits = [];
+    if(a.due) bits.push('期日 ' + a.due);
+    if(a.owner.trim()) bits.push(a.owner.trim());
+    meta.textContent = bits.join('　');
+
+    line.appendChild(numEl);
+    line.appendChild(textBtn);
+    if(bits.length) line.appendChild(meta);
+    step.appendChild(line);
+
+    const sub = subchartOfAction(a.id);
+    if(sub && hasContent(sub)){
+      step.appendChild(overviewBranch(sub, num));
+    }
+    branch.appendChild(step);
+  });
+
+  if(!ownerFilter){
+    // このチャートの今のリアリティを枝の一番下に
+    const reality = poleSummary(chart, 'reality');
+    if(reality) branch.appendChild(reality);
+    const miss = missingTag(chart);
+    if(miss) branch.appendChild(miss);
+  }
+
+  return branch;
+}
+
+function crumbPath(){
+  const path = [];
+  let c = chartOf(currentId);
+  while(c){
+    path.unshift(c);
+    c = parentChartOf(c);
+  }
+  return path;
+}
+function chartNumber(c){
+  if(!c.parentActionId) return '';
+  const parent = parentChartOf(c);
+  if(!parent) return '';
+  const idx = parent.actions.findIndex(a => a.id === c.parentActionId);
+  const parentNum = chartNumber(parent);
+  const n = String(idx + 1);
+  return parentNum ? `${parentNum}-${n}` : n;
+}
+function crumbLabel(c){
+  if(!c.parentActionId) return 'マスターチャート';
+  const parent = parentChartOf(c);
+  const act = parent && parent.actions.find(a => a.id === c.parentActionId);
+  const num = chartNumber(c);
+  const name = (act && act.text.trim()) || '（無題のステップ）';
+  return num ? `${num}　${name}` : name;
+}
+function renderCrumbs(){
+  $crumbs.innerHTML = '';
+  const path = crumbPath();
+  path.forEach((c, i) => {
+    if(i > 0){
+      const sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '›';
+      $crumbs.appendChild(sep);
+    }
+    if(i === path.length - 1){
+      const here = document.createElement('span');
+      here.className = 'here'; here.textContent = crumbLabel(c);
+      $crumbs.appendChild(here);
+    } else {
+      const b = document.createElement('button');
+      b.textContent = crumbLabel(c);
+      b.addEventListener('click', () => { currentId = c.id; render(); });
+      $crumbs.appendChild(b);
+    }
+  });
+}
+
+function autosize(t){
+  t.style.height = 'auto';
+  t.style.height = t.scrollHeight + 'px';
+}
+
+/* 行頭の全角空白でインデント段階を表す（互換のためデータは文字列のまま） */
+function parseItem(raw){
+  let lv = 0, t = raw || '';
+  while(t.startsWith('　') && lv < 2){ t = t.slice(1); lv++; }
+  return { lv, text: t };
+}
+function composeItem(lv, text){ return '　'.repeat(lv) + text; }
+
+function bulletList(items, onChange){
+  const ul = document.createElement('ul');
+  ul.className = 'items';
+  items.forEach((raw, idx) => {
+    let { lv, text } = parseItem(raw);
+    const li = document.createElement('li');
+    li.dataset.lv = lv;
+    const ta = document.createElement('textarea');
+    ta.rows = 1; ta.value = text;
+    ta.placeholder = '箇条書きで記入';
+    const setLv = n => {
+      lv = Math.max(0, Math.min(2, n));
+      li.dataset.lv = lv;
+      items[idx] = composeItem(lv, ta.value);
+    };
+    ta.addEventListener('input', () => { items[idx] = composeItem(lv, ta.value); autosize(ta); });
+    ta.addEventListener('keydown', e => {
+      if(e.key === 'Tab' && !e.isComposing){
+        e.preventDefault();
+        setLv(lv + (e.shiftKey ? -1 : 1));
+        return;
+      }
+      if(e.key === 'Enter' && !e.isComposing){
+        e.preventDefault();
+        items.splice(idx + 1, 0, composeItem(lv, ''));
+        onChange(idx + 1);
+      }
+    });
+    const bOut = document.createElement('button');
+    bOut.className = 'lv'; bOut.textContent = '⇤'; bOut.title = '一段上げる（Shift+Tab）';
+    bOut.addEventListener('click', () => { setLv(lv - 1); ta.focus(); });
+    const bIn = document.createElement('button');
+    bIn.className = 'lv'; bIn.textContent = '⇥'; bIn.title = '一段下げる（Tab）';
+    bIn.addEventListener('click', () => { setLv(lv + 1); ta.focus(); });
+    const x = document.createElement('button');
+    x.className = 'x'; x.textContent = '×'; x.title = 'この行を削除';
+    x.addEventListener('click', () => {
+      items.splice(idx, 1);
+      if(items.length === 0) items.push('');
+      onChange();
+    });
+    li.appendChild(ta); li.appendChild(bOut); li.appendChild(bIn); li.appendChild(x);
+    ul.appendChild(li);
+    requestAnimationFrame(() => autosize(ta));
+  });
+  return ul;
+}
+
+function pole(kind, chart){
+  const isVision = kind === 'vision';
+  const div = document.createElement('div');
+  div.className = 'pole ' + kind;
+
+  const head = document.createElement('div');
+  head.className = 'pole-head';
+  const label = document.createElement('span');
+  label.className = 'pole-label';
+  label.textContent = isVision ? '望む成果' : '今のリアリティ';
+  const dateWrap = document.createElement('label');
+  dateWrap.className = 'date-field';
+  const dateCap = document.createElement('span');
+  dateCap.textContent = isVision ? '達成期日' : '時点';
+  const date = document.createElement('input');
+  date.type = 'date';
+  date.value = isVision ? chart.goalDate : chart.realityDate;
+  date.addEventListener('input', () => {
+    if(isVision){
+      chart.goalDate = date.value;
+      // 親のアクションステップの期日と同一のものとして同期
+      if(chart.parentActionId){
+        const parent = parentChartOf(chart);
+        const act = parent && parent.actions.find(a => a.id === chart.parentActionId);
+        if(act) act.due = date.value;
+      }
+    } else {
+      chart.realityDate = date.value;
+    }
+  });
+  dateWrap.appendChild(dateCap); dateWrap.appendChild(date);
+  head.appendChild(label); head.appendChild(dateWrap);
+  div.appendChild(head);
+
+  const items = isVision ? chart.goalItems : chart.realityItems;
+  const rerenderFocus = (focusIdx) => {
+    render();
+    if(focusIdx != null){
+      const poleEl = $chart.querySelector('.pole.' + kind);
+      const tas = poleEl.querySelectorAll('ul.items textarea');
+      if(tas[focusIdx]) tas[focusIdx].focus();
+    }
+  };
+  div.appendChild(bulletList(items, rerenderFocus));
+
+  const add = document.createElement('button');
+  add.className = 'add-item';
+  add.textContent = isVision ? '＋ 達成された状態を追加' : '＋ 現状を追加';
+  add.addEventListener('click', () => {
+    items.push('');
+    rerenderFocus(items.length - 1);
+  });
+  div.appendChild(add);
+  return div;
+}
+
+function countSteps(chart){
+  return chart ? chart.actions.length : 0;
+}
+
+function stepEl(chart, action, num){
+  const div = document.createElement('div');
+  div.className = 'step';
+
+  if(action.done) div.classList.add('is-done');
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  const cb = document.createElement('button');
+  cb.className = 'pill' + (action.done ? ' on' : '');
+  cb.textContent = action.done ? '✓ 完了' : '完了';
+  cb.title = '完了にする／戻す';
+  cb.addEventListener('click', () => { action.done = !action.done; render(); });
+  row.appendChild(cb);
+  const numEl = document.createElement('span');
+  numEl.className = 'ov-num';
+  numEl.textContent = num;
+  row.appendChild(numEl);
+  const ta = document.createElement('textarea');
+  ta.rows = 1; ta.value = action.text;
+  ta.placeholder = 'アクションステップを記入';
+  ta.addEventListener('input', () => { action.text = ta.value; autosize(ta); });
+  const idx = chart.actions.findIndex(x => x.id === action.id);
+  const up = document.createElement('button');
+  up.className = 'mv'; up.textContent = '↑'; up.title = '上へ';
+  up.disabled = idx === 0;
+  up.addEventListener('click', () => {
+    chart.actions.splice(idx, 1);
+    chart.actions.splice(idx - 1, 0, action);
+    render();
+  });
+  const down = document.createElement('button');
+  down.className = 'mv'; down.textContent = '↓'; down.title = '下へ';
+  down.disabled = idx === chart.actions.length - 1;
+  down.addEventListener('click', () => {
+    chart.actions.splice(idx, 1);
+    chart.actions.splice(idx + 1, 0, action);
+    render();
+  });
+  const x = document.createElement('button');
+  x.className = 'x'; x.textContent = '×'; x.title = 'このステップを削除';
+  x.addEventListener('click', () => {
+    const sub = subchartOfAction(action.id);
+    if(sub && !confirm('このステップにはサブチャートがあります。サブチャートごと削除しますか？')) return;
+    if(sub) deleteChartCascade(sub);
+    chart.actions = chart.actions.filter(a => a.id !== action.id);
+    render();
+  });
+  row.appendChild(ta);
+  row.appendChild(up); row.appendChild(down);
+  row.appendChild(x);
+  div.appendChild(row);
+
+  const meta = document.createElement('div');
+  meta.className = 'step-meta';
+
+  const dueL = document.createElement('label');
+  dueL.append('期日');
+  const due = document.createElement('input');
+  due.type = 'date'; due.value = action.due;
+  due.addEventListener('input', () => {
+    action.due = due.value;
+    const sub = subchartOfAction(action.id);
+    if(sub) sub.goalDate = due.value;   // サブチャートの達成期日と同期
+  });
+  dueL.appendChild(due);
+
+  const ownL = document.createElement('label');
+  ownL.append('責任者');
+  const own = document.createElement('select');
+  ensureMembers();
+  const opts = [''].concat(db.members);
+  if(action.owner && !opts.includes(action.owner)) opts.push(action.owner);
+  opts.forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name || '─';
+    own.appendChild(o);
+  });
+  const oNew = document.createElement('option');
+  oNew.value = '__new__'; oNew.textContent = '＋ 追加…';
+  own.appendChild(oNew);
+  own.value = action.owner || '';
+  own.addEventListener('change', () => {
+    if(own.value === '__new__'){
+      const name = (prompt('メンバー名') || '').trim();
+      if(name && !db.members.includes(name)) db.members.push(name);
+      action.owner = name || action.owner || '';
+      render(); return;
+    }
+    action.owner = own.value;
+  });
+  ownL.appendChild(own);
+
+  const sub = subchartOfAction(action.id);
+  const drill = document.createElement('button');
+  drill.className = 'drill';
+  if(sub){
+    drill.append('チャートを開く');
+    const n = countSteps(sub);
+    if(n > 0){
+      const badge = document.createElement('span');
+      badge.className = 'count'; badge.textContent = n;
+      drill.appendChild(badge);
+    }
+  } else {
+    drill.append('⊕ チャート化');
+  }
+  drill.addEventListener('click', () => {
+    let target = subchartOfAction(action.id);
+    if(!target){
+      target = newChart(action.id, action.text);
+      // 親のアクションが、サブチャートの望む成果の出発点になる
+      if(action.text.trim()) target.goalItems = [action.text.trim()];
+      if(action.due) target.goalDate = action.due;
+      db.charts[target.id] = target;
+    }
+    currentId = target.id;
+    render();
+    window.scrollTo({top: 0});
+  });
+
+  meta.appendChild(dueL);
+  meta.appendChild(ownL);
+  meta.appendChild(drill);
+  div.appendChild(meta);
+
+  requestAnimationFrame(() => autosize(ta));
+  return div;
+}
+
+function renderChart(){
+  const chart = chartOf(currentId);
+  if(!chart){ currentId = db.rootId; return renderChart(); }
+  $chart.innerHTML = '';
+
+  $chart.appendChild(pole('vision', chart));
+
+  const steps = document.createElement('div');
+  steps.className = 'steps';
+  const sl = document.createElement('div');
+  sl.className = 'steps-label'; sl.textContent = '望む成果と今のリアリティの間で、緊張が解消に向かう';
+  steps.appendChild(sl);
+
+  const prefix = chartNumber(chart);
+  chart.actions.forEach((a, i) => {
+    const num = prefix ? `${prefix}-${i + 1}` : String(i + 1);
+    steps.appendChild(stepEl(chart, a, num));
+  });
+
+
+  const add = document.createElement('button');
+  add.className = 'add-step';
+  add.textContent = '＋ アクションステップ';
+  add.addEventListener('click', () => {
+    chart.actions.push(newAction());
+    render();
+    const tas = $chart.querySelectorAll('.step .step-row textarea');
+    const last = tas[tas.length - 1];
+    if(last) last.focus();
+  });
+  steps.appendChild(add);
+  $chart.appendChild(steps);
+
+  $chart.appendChild(pole('reality', chart));
+}
+
+function reconcileDates(){
+  Object.values(db.charts).forEach(c => {
+    if(!c.parentActionId) return;
+    const parent = parentChartOf(c);
+    const act = parent && parent.actions.find(a => a.id === c.parentActionId);
+    if(!act) return;
+    if(act.due && !c.goalDate) c.goalDate = act.due;
+    else if(!act.due && c.goalDate) act.due = c.goalDate;
+    else if(act.due !== c.goalDate) c.goalDate = act.due; // 食い違いは親側を正とする
+  });
+}
+
+/* ================= save / load ================= */
+document.getElementById('btn-save').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const d = new Date().toISOString().slice(0,10);
+  a.download = `tension-chart-${d}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('btn-load').addEventListener('click', () =>
+  document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const data = JSON.parse(r.result);
+      if(!data.charts || !data.rootId || !data.charts[data.rootId]) throw new Error('形式が違います');
+      db = data;
+      currentId = db.rootId;
+      reconcileDates();
+      ensureMembers();
+      ownerFilter = '';
+      render();
+    }catch(err){
+      alert('読み込めませんでした：緊張構造チャートのJSONファイルを選んでください');
+    }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+render();
+</script>
+
+<script>
+/* ================= Supabase 同期レイヤー ================= */
+const SUPABASE_URL      = 'https://kzzdsibwjvocbihfqtlv.supabase.co';   // ★プロジェクトURL
+const SUPABASE_ANON_KEY = 'sb_publishable_n2qWIOJzVfrzjYANDe4UzA_O4dLVmZ1';                        // ★Settings > API > anon public
+const CHART_ID          = 'rfc-2026-2027';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $gate = document.getElementById('auth-gate');
+const $status = document.getElementById('sync-status');
+let lastSavedJson = null, lastRemoteTs = null, saving = false;
+
+function setStatus(t, danger){
+  $status.textContent = t;
+  $status.style.color = danger ? 'var(--danger)' : 'var(--muted)';
+}
+
+document.getElementById('btn-login').addEventListener('click', () => {
+  sb.auth.signInWithOAuth({ provider: 'google',
+    options: { redirectTo: location.origin + location.pathname } });
+});
+
+async function loadRemote(){
+  setStatus('読み込み中…');
+  const { data: row, error } = await sb.from('tension_charts')
+    .select('data, updated_at').eq('id', CHART_ID).maybeSingle();
+  if(error){
+    setStatus('アクセスできません（メンバー登録を確認）', true);
+    document.getElementById('auth-msg').textContent = error.message;
+    return;
+  }
+  if(row){
+    db = row.data;
+    currentId = db.rootId;
+    reconcileDates(); ensureMembers();
+    lastRemoteTs = row.updated_at;
+  } else {
+    // 初回：現在のローカル状態をクラウドの初期データにする
+    await saveRemote(true);
+  }
+  lastSavedJson = JSON.stringify(db);
+  render();
+  setStatus('同期済み');
+}
+
+async function saveRemote(isFirst){
+  const j = JSON.stringify(db);
+  saving = true;
+  setStatus('保存中…');
+  const { data: { session } } = await sb.auth.getSession();
+  const { data: row, error } = await sb.from('tension_charts')
+    .upsert({ id: CHART_ID, data: db, updated_at: new Date().toISOString(),
+              updated_by: session?.user?.email || '' })
+    .select('updated_at').single();
+  saving = false;
+  if(error){ setStatus('保存できませんでした', true); return; }
+  lastSavedJson = j;
+  lastRemoteTs = row.updated_at;
+  const t = new Date();
+  setStatus('保存済み ' + t.getHours() + ':' + String(t.getMinutes()).padStart(2,'0'));
+}
+
+/* 変更検知の自動保存（2.5秒ごとに差分チェック） */
+setInterval(() => {
+  if(saving || lastSavedJson === null) return;
+  if(JSON.stringify(db) !== lastSavedJson) saveRemote();
+}, 2500);
+
+/* 他のメンバーの更新を取り込む（30秒ごと、自分に未保存変更がない時だけ） */
+setInterval(async () => {
+  if(lastRemoteTs === null || saving) return;
+  if(JSON.stringify(db) !== lastSavedJson) return;
+  const { data: row } = await sb.from('tension_charts')
+    .select('updated_at').eq('id', CHART_ID).maybeSingle();
+  if(row && row.updated_at > lastRemoteTs) loadRemote();
+}, 30000);
+
+window.addEventListener('beforeunload', () => {
+  if(lastSavedJson !== null && JSON.stringify(db) !== lastSavedJson){
+    navigator.sendBeacon && saveRemote();
+  }
+});
+
+async function boot(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){ $gate.style.display = 'none'; loadRemote(); }
+  else { $gate.style.display = 'flex'; }
+}
+sb.auth.onAuthStateChange((_e, session) => {
+  if(session){ $gate.style.display = 'none'; if(lastSavedJson === null) loadRemote(); }
+  else { $gate.style.display = 'flex'; }
+});
+boot();
+</script>
+</body>
+</html>
