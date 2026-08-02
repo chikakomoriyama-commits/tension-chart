@@ -1046,7 +1046,7 @@ render();
 <script>
 /* ================= Supabase 同期レイヤー ================= */
 const SUPABASE_URL      = 'https://kzzdsibwjvocbihfqtlv.supabase.co';   // ★プロジェクトURL
-const SUPABASE_ANON_KEY = 'ここにanonキーを貼る';                        // ★Settings > API > anon public
+const SUPABASE_ANON_KEY = 'sb_publishable_n2qWIOJzVfrzjYANDe4UzA_O4dLVmZ1';
 const CHART_ID          = 'rfc-2026-2027';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1064,12 +1064,31 @@ document.getElementById('btn-login').addEventListener('click', () => {
     options: { redirectTo: location.origin + location.pathname } });
 });
 
+let currentEmail = '';
+async function refreshWhoami(){
+  const { data: { session } } = await sb.auth.getSession();
+  currentEmail = session?.user?.email || '';
+  let el = document.getElementById('whoami');
+  if(!el){
+    el = document.createElement('span');
+    el.id = 'whoami';
+    el.style.cssText = 'font-size:.72rem;color:var(--muted);align-self:center;margin-right:8px';
+    $status.parentNode.insertBefore(el, $status);
+    const out = document.createElement('button');
+    out.className = 'btn'; out.textContent = 'ログアウト';
+    out.style.fontSize = '.72rem';
+    out.addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+    $status.parentNode.insertBefore(out, $status.nextSibling);
+  }
+  el.textContent = currentEmail;
+}
 async function loadRemote(){
+  await refreshWhoami();
   setStatus('読み込み中…');
   const { data: row, error } = await sb.from('tension_charts')
     .select('data, updated_at').eq('id', CHART_ID).maybeSingle();
   if(error){
-    setStatus('アクセスできません（メンバー登録を確認）', true);
+    setStatus(`アクセスできません（${currentEmail} はメンバー未登録）`, true);
     document.getElementById('auth-msg').textContent = error.message;
     return;
   }
