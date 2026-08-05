@@ -203,6 +203,29 @@ ul.items li:hover .lv,ul.items li:focus-within .lv{visibility:visible}
   border-bottom:1px solid var(--line);background:none;padding:3px 0}
 .member-add input:focus{outline:none;border-bottom-color:var(--ink)}
 .modal-close{margin-top:16px;text-align:right}
+/* ---- ステップメモ ---- */
+.note-btn{
+  flex:none;font-family:inherit;font-size:.68rem;letter-spacing:.08em;
+  border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:999px;padding:1px 10px;cursor:pointer;
+}
+.note-btn:hover{border-color:var(--ink);color:var(--ink)}
+.note-btn.has{background:var(--ink);border-color:var(--ink);color:#fff}
+.note-modal{width:min(560px,94vw)}
+.note-step{font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.5}
+.note-ta{
+  width:100%;min-height:140px;font-family:inherit;font-size:.9rem;line-height:1.7;
+  border:1px solid var(--line);padding:10px 12px;resize:vertical;color:var(--ink);
+}
+.note-ta:focus{outline:none;border-color:var(--ink)}
+.note-tools{display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap}
+.note-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px}
+.note-thumb{position:relative;border:1px solid var(--line);aspect-ratio:4/3;overflow:hidden;background:var(--reality-soft)}
+.note-thumb img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}
+.note-thumb .x{position:absolute;top:2px;right:4px;background:rgba(255,255,255,.85);border-radius:999px;visibility:visible;font-size:.8rem}
+.note-uploading{font-size:.74rem;color:var(--muted)}
+.note-view{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:80;cursor:zoom-out}
+.note-view img{max-width:92vw;max-height:92vh}
 .drill{
   margin-left:auto;display:inline-flex;align-items:center;gap:5px;
   font-family:inherit;font-size:.78rem;letter-spacing:.03em;
@@ -529,6 +552,154 @@ function memberUsage(name){
   eachAction(a => { if(ownerTokens(a.owner).includes(name)) n++; });
   return n;
 }
+const NOTE_BUCKET = 'chart-notes';
+
+function openStepNote(action){
+  if(!action.note) action.note = { text: '', images: [] };
+  const note = action.note;
+
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  const close = () => { bg.remove(); render(); };
+  bg.addEventListener('click', e => { if(e.target === bg) close(); });
+
+  const box = document.createElement('div');
+  box.className = 'modal note-modal';
+
+  const h = document.createElement('h2');
+  h.textContent = 'メモ';
+  box.appendChild(h);
+  const stepLine = document.createElement('div');
+  stepLine.className = 'note-step';
+  stepLine.textContent = action.text.trim() || '（無題のステップ）';
+  box.appendChild(stepLine);
+
+  const ta = document.createElement('textarea');
+  ta.className = 'note-ta';
+  ta.placeholder = 'ミーティングの決定事項、気づき、宿題など';
+  ta.value = note.text || '';
+  ta.addEventListener('input', () => { note.text = ta.value; });
+  box.appendChild(ta);
+
+  const tools = document.createElement('div');
+  tools.className = 'note-tools';
+  const bDate = document.createElement('button');
+  bDate.className = 'mini';
+  bDate.textContent = '＋ 今日の日付';
+  bDate.addEventListener('click', () => {
+    const d = new Date();
+    const stamp = `\n── ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ──\n`;
+    ta.value = (ta.value ? ta.value.replace(/\s*$/, '\n') : '') + stamp.replace(/^\n/, ta.value ? '' : '');
+    note.text = ta.value;
+    ta.focus();
+  });
+  const bPhoto = document.createElement('button');
+  bPhoto.className = 'mini';
+  bPhoto.textContent = '＋ 写真';
+  const fileInp = document.createElement('input');
+  fileInp.type = 'file'; fileInp.accept = 'image/*'; fileInp.multiple = true;
+  fileInp.style.display = 'none';
+  bPhoto.addEventListener('click', () => fileInp.click());
+  const upStatus = document.createElement('span');
+  upStatus.className = 'note-uploading';
+  fileInp.addEventListener('change', async () => {
+    const files = [...fileInp.files];
+    fileInp.value = '';
+    for(const f of files){
+      upStatus.textContent = 'アップロード中…';
+      try{
+        const path = await uploadNoteImage(action, f);
+        note.images = note.images || [];
+        note.images.push(path);
+        await renderThumbs();
+        upStatus.textContent = '';
+      }catch(err){
+        upStatus.textContent = 'アップロードできませんでした（' + (err.message || err) + '）';
+      }
+    }
+  });
+  tools.appendChild(bDate); tools.appendChild(bPhoto); tools.appendChild(upStatus);
+  tools.appendChild(fileInp);
+  box.appendChild(tools);
+
+  const thumbs = document.createElement('div');
+  thumbs.className = 'note-thumbs';
+  box.appendChild(thumbs);
+
+  async function renderThumbs(){
+    thumbs.innerHTML = '';
+    for(const path of (note.images || [])){
+      const cell = document.createElement('div');
+      cell.className = 'note-thumb';
+      const img = document.createElement('img');
+      img.alt = '';
+      cell.appendChild(img);
+      const x = document.createElement('button');
+      x.className = 'x'; x.textContent = '×'; x.title = 'この写真を削除';
+      x.addEventListener('click', () => {
+        if(!confirm('この写真を削除しますか？')) return;
+        note.images = note.images.filter(p => p !== path);
+        try{ sb.storage.from(NOTE_BUCKET).remove([path]); }catch(e){}
+        renderThumbs();
+      });
+      cell.appendChild(x);
+      thumbs.appendChild(cell);
+      try{
+        const { data, error } = await sb.storage.from(NOTE_BUCKET).createSignedUrl(path, 3600);
+        if(!error && data){
+          img.src = data.signedUrl;
+          img.addEventListener('click', () => {
+            const v = document.createElement('div');
+            v.className = 'note-view';
+            const big = document.createElement('img');
+            big.src = data.signedUrl;
+            v.appendChild(big);
+            v.addEventListener('click', () => v.remove());
+            document.body.appendChild(v);
+          });
+        }
+      }catch(e){}
+    }
+  }
+  renderThumbs();
+
+  const cl = document.createElement('div');
+  cl.className = 'modal-close';
+  const bC = document.createElement('button');
+  bC.className = 'btn'; bC.textContent = '閉じる';
+  bC.addEventListener('click', close);
+  cl.appendChild(bC);
+  box.appendChild(cl);
+
+  bg.appendChild(box);
+  document.body.appendChild(bg);
+  ta.focus();
+}
+
+/* 画像は縮小してからStorageへ。JSONにはパスだけを保存する */
+async function uploadNoteImage(action, file){
+  if(typeof sb === 'undefined') throw new Error('クラウド未接続');
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = URL.createObjectURL(file);
+  });
+  const MAX = 1600;
+  const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(img.width * scale);
+  cv.height = Math.round(img.height * scale);
+  cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  URL.revokeObjectURL(img.src);
+  const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.85));
+  const path = `rfc-2026-2027/${action.id}/${Date.now()}.jpg`;
+  const { error } = await sb.storage.from(NOTE_BUCKET)
+    .upload(path, blob, { contentType: 'image/jpeg' });
+  if(error) throw error;
+  return path;
+}
+
 function openMembersModal(){
   ensureMembers();
   const bg = document.createElement('div');
@@ -1084,6 +1255,13 @@ function stepEl(chart, action, num){
 
   meta.appendChild(dueL);
   meta.appendChild(ownL);
+  const noteBtn = document.createElement('button');
+  const hasNote = a => a.note && ((a.note.text || '').trim() || (a.note.images || []).length);
+  noteBtn.className = 'note-btn' + (hasNote(action) ? ' has' : '');
+  noteBtn.textContent = hasNote(action) ? '✎ メモ' : 'メモ';
+  noteBtn.title = 'このステップのメモ（テキスト・写真）';
+  noteBtn.addEventListener('click', () => openStepNote(action));
+  meta.appendChild(noteBtn);
   meta.appendChild(drill);
   div.appendChild(meta);
 
@@ -1672,6 +1850,13 @@ function wbStepEl(chart, action, num){
 
   meta.appendChild(dueL);
   meta.appendChild(ownL);
+  const noteBtn = document.createElement('button');
+  const hasNote = a => a.note && ((a.note.text || '').trim() || (a.note.images || []).length);
+  noteBtn.className = 'note-btn' + (hasNote(action) ? ' has' : '');
+  noteBtn.textContent = hasNote(action) ? '✎ メモ' : 'メモ';
+  noteBtn.title = 'このステップのメモ（テキスト・写真）';
+  noteBtn.addEventListener('click', () => openStepNote(action));
+  meta.appendChild(noteBtn);
   meta.appendChild(drill);
   div.appendChild(meta);
   return div;
