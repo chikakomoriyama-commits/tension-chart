@@ -1171,6 +1171,35 @@ function stepEl(chart, action, num){
     chart.actions.splice(idx + 1, 0, action);
     render();
   });
+  const demote = document.createElement('button');
+  demote.className = 'mv'; demote.textContent = '⇥';
+  demote.title = '一つ上のステップの配下へ移動（一段下げる）';
+  demote.disabled = idx === 0;
+  demote.addEventListener('click', () => {
+    const prev = chart.actions[idx - 1];
+    let sub = subchartOfAction(prev.id);
+    if(!sub){
+      sub = newChart(prev.id, prev.text);
+      if(prev.text.trim()) sub.goalItems = [prev.text.trim()];
+      if(prev.due) sub.goalDate = prev.due;
+      db.charts[sub.id] = sub;
+    }
+    chart.actions.splice(idx, 1);
+    sub.actions.push(action);          // サブチャートはIDで繋がっているため孫ごとついていく
+    render();
+  });
+  const promote = document.createElement('button');
+  promote.className = 'mv'; promote.textContent = '⇤';
+  promote.title = '一段上のチャートへ移動（親ステップのすぐ後ろに並ぶ）';
+  promote.disabled = !chart.parentActionId;
+  promote.addEventListener('click', () => {
+    const parent = parentChartOf(chart);
+    if(!parent) return;
+    const pIdx = parent.actions.findIndex(a => a.id === chart.parentActionId);
+    chart.actions.splice(idx, 1);
+    parent.actions.splice(pIdx + 1, 0, action);
+    render();
+  });
   const x = document.createElement('button');
   x.className = 'x'; x.textContent = '×'; x.title = 'このステップを削除';
   x.addEventListener('click', () => {
@@ -1182,6 +1211,7 @@ function stepEl(chart, action, num){
   });
   row.appendChild(ta);
   row.appendChild(up); row.appendChild(down);
+  row.appendChild(promote); row.appendChild(demote);
   row.appendChild(x);
   div.appendChild(row);
 
