@@ -281,6 +281,30 @@ ul.items li:hover .lv,ul.items li:focus-within .lv{visibility:visible}
 .ov-text.untitled{color:var(--muted);font-style:normal}
 .ov-meta{font-size:.72rem;color:var(--muted);flex:none}
 .ov-empty{font-size:.85rem;color:var(--muted);padding:6px 0}
+
+/* ---------- action list（期日順一覧）---------- */
+.al-group{margin:18px 0 28px}
+.al-group-head{font-size:.78rem;font-weight:700;letter-spacing:.14em;color:var(--muted);
+  border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:2px}
+.al-group.overdue .al-group-head{color:var(--danger);border-bottom-color:var(--danger)}
+.al-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.al-row .pill{margin-top:2px}
+.al-due{flex:none;width:7.2em;font-size:.82rem;color:var(--muted);line-height:1.45;padding-top:1px}
+.al-due.soon{color:var(--ink);font-weight:700}
+.al-due.overdue{color:var(--danger);font-weight:700}
+.al-rel{display:block;font-size:.72rem;font-weight:400;opacity:.85}
+.al-due.overdue .al-rel{font-weight:700}
+.al-main{flex:1;min-width:0}
+.al-text{display:block;width:100%;text-align:left;font-family:inherit;font-size:.95rem;line-height:1.6;
+  color:var(--ink);background:none;border:none;cursor:pointer;padding:0}
+.al-text:hover{color:var(--vision);text-decoration:underline}
+.al-text.untitled{color:var(--muted)}
+.al-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:.74rem;color:var(--muted)}
+.al-chart{font-family:inherit;font-size:.72rem;letter-spacing:.04em;color:var(--muted);
+  border:1px solid var(--line);background:var(--card);border-radius:999px;padding:1px 10px;cursor:pointer;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.al-chart:hover{border-color:var(--ink);color:var(--ink)}
+.al-row.is-done .al-text{color:var(--muted);text-decoration:line-through}
 .btn.active{background:var(--vision);border-color:var(--vision);color:#fff}
 
 input[type="file"]{display:none}
@@ -410,6 +434,7 @@ body.wb #wb-ui{display:block}
       <span id="sync-status" style="font-size:.72rem;color:var(--muted);align-self:center;margin-right:4px"></span>
       <button class="btn" id="btn-mode-board">ホワイトボード</button>
       <button class="btn" id="btn-view">全体を見渡す</button>
+      <button class="btn" id="btn-actions">アクション一覧</button>
       <button class="btn" id="btn-members">メンバー</button>
       <button class="btn" id="btn-save">保存（JSON）</button>
       <button class="btn" id="btn-load">読み込み</button>
@@ -771,23 +796,32 @@ function openMembersModal(){
 }
 document.getElementById('btn-members').addEventListener('click', openMembersModal);
 
-let viewMode = 'chart';   // 'chart' | 'overview'
+let viewMode = 'chart';   // 'chart' | 'overview' | 'actions'
+const $btnActions = document.getElementById('btn-actions');
 
 $btnView.addEventListener('click', () => {
-  viewMode = viewMode === 'chart' ? 'overview' : 'chart';
+  viewMode = viewMode === 'overview' ? 'chart' : 'overview';
+  render();
+});
+$btnActions.addEventListener('click', () => {
+  viewMode = viewMode === 'actions' ? 'chart' : 'actions';
   render();
 });
 
 function render(){
+  $btnView.textContent = viewMode === 'overview' ? 'チャートに戻る' : '全体を見渡す';
+  $btnView.classList.toggle('active', viewMode === 'overview');
+  $btnActions.textContent = viewMode === 'actions' ? 'チャートに戻る' : 'アクション一覧';
+  $btnActions.classList.toggle('active', viewMode === 'actions');
   if(viewMode === 'overview'){
-    $btnView.textContent = 'チャートに戻る';
-    $btnView.classList.add('active');
     $crumbs.innerHTML = '';
     $chart.classList.add('no-line');
     renderOverview();
+  } else if(viewMode === 'actions'){
+    $crumbs.innerHTML = '';
+    $chart.classList.add('no-line');
+    renderActionList();
   } else {
-    $btnView.textContent = '全体を見渡す';
-    $btnView.classList.remove('active');
     $chart.classList.remove('no-line');
     renderCrumbs();
     renderChart();
@@ -962,6 +996,189 @@ function overviewBranch(chart, prefix){
   }
 
   return branch;
+}
+
+/* ---- アクション一覧（期日順・全チャート横断） ---- */
+let alFilter = 'open';   // 'open' | 'all' | 'done'
+
+function collectActions(chart, prefix, out){
+  chart.actions.forEach((a, i) => {
+    const num = prefix === '' ? String(i + 1) : `${prefix}-${i + 1}`;
+    out.push({ a, chart, num });
+    const sub = subchartOfAction(a.id);
+    if(sub) collectActions(sub, num, out);
+  });
+  return out;
+}
+function todayYMD(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function daysUntil(due){
+  const t = new Date(todayYMD() + 'T00:00:00');
+  const d = new Date(due + 'T00:00:00');
+  return Math.round((d - t) / 86400000);
+}
+function dueRelLabel(diff){
+  if(diff < 0)   return Math.abs(diff) + '日超過';
+  if(diff === 0) return '今日';
+  if(diff === 1) return '明日';
+  return 'あと' + diff + '日';
+}
+
+function renderActionList(){
+  $chart.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'overview';
+
+  // フィルタ行（表示・担当者）
+  ensureMembers();
+  const fb = document.createElement('div');
+  fb.className = 'ov-filter';
+  fb.append('表示');
+  const selF = document.createElement('select');
+  [['open', '未完了のみ'], ['all', 'すべて'], ['done', '完了のみ']].forEach(([v, t]) => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = t;
+    selF.appendChild(o);
+  });
+  selF.value = alFilter;
+  selF.addEventListener('change', () => { alFilter = selF.value; render(); });
+  fb.appendChild(selF);
+  fb.append('担当者');
+  const selO = document.createElement('select');
+  ['', ...db.members].forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name || '全員';
+    selO.appendChild(o);
+  });
+  selO.value = ownerFilter;
+  selO.addEventListener('change', () => { ownerFilter = selO.value; render(); });
+  fb.appendChild(selO);
+  box.appendChild(fb);
+
+  const title = document.createElement('div');
+  title.className = 'ov-root';
+  title.textContent = 'アクション一覧（期日順）';
+  box.appendChild(title);
+
+  // 全チャートから収集してフィルタ
+  let entries = collectActions(chartOf(db.rootId), '', []);
+  entries = entries.filter(e => e.a.text.trim() || e.a.due);
+  if(ownerFilter) entries = entries.filter(e => ownerTokens(e.a.owner).includes(ownerFilter));
+  if(alFilter === 'open') entries = entries.filter(e => !e.a.done);
+  if(alFilter === 'done') entries = entries.filter(e => e.a.done);
+
+  // グループ分け（期限切れ → 今日 → 7日以内 → それ以降 → 期日未設定 → 完了済み）
+  const groups = [
+    { key: 'overdue', label: '期限切れ',   list: [] },
+    { key: 'today',   label: '今日',       list: [] },
+    { key: 'week',    label: '7日以内',    list: [] },
+    { key: 'later',   label: 'それ以降',   list: [] },
+    { key: 'nodate',  label: '期日未設定', list: [] },
+    { key: 'done',    label: '完了済み',   list: [] },
+  ];
+  entries.forEach(e => {
+    if(e.a.done && alFilter === 'all'){ groups[5].list.push(e); return; }
+    if(!e.a.due){ groups[4].list.push(e); return; }
+    const diff = daysUntil(e.a.due);
+    if(diff < 0)        groups[0].list.push(e);
+    else if(diff === 0) groups[1].list.push(e);
+    else if(diff <= 7)  groups[2].list.push(e);
+    else                groups[3].list.push(e);
+  });
+  const byDue = (x, y) => (x.a.due || '9999-99-99').localeCompare(y.a.due || '9999-99-99');
+  groups.forEach(g => g.list.sort(byDue));
+
+  if(entries.length === 0){
+    const e = document.createElement('div');
+    e.className = 'ov-empty';
+    e.textContent = alFilter === 'open' ? '未完了のアクションステップはありません' : 'アクションステップがありません';
+    box.appendChild(e);
+  }
+
+  groups.forEach(g => {
+    if(g.list.length === 0) return;
+    const sec = document.createElement('div');
+    sec.className = 'al-group' + (g.key === 'overdue' ? ' overdue' : '');
+    const h = document.createElement('div');
+    h.className = 'al-group-head';
+    h.textContent = g.label + '（' + g.list.length + '）';
+    sec.appendChild(h);
+    g.list.forEach(e => sec.appendChild(actionListRow(e)));
+    box.appendChild(sec);
+  });
+
+  $chart.appendChild(box);
+}
+
+function actionListRow(e){
+  const { a, chart, num } = e;
+  const row = document.createElement('div');
+  row.className = 'al-row' + (a.done ? ' is-done' : '');
+
+  const pill = document.createElement('button');
+  pill.className = 'pill' + (a.done ? ' on' : '');
+  pill.textContent = a.done ? '✓' : '完了';
+  pill.title = '完了にする／戻す';
+  pill.addEventListener('click', () => { a.done = !a.done; render(); });
+  row.appendChild(pill);
+
+  const due = document.createElement('span');
+  due.className = 'al-due';
+  if(a.due){
+    const diff = daysUntil(a.due);
+    if(!a.done){
+      if(diff < 0)       due.classList.add('overdue');
+      else if(diff <= 7) due.classList.add('soon');
+    }
+    due.textContent = a.due;
+    if(!a.done){
+      const rel = document.createElement('span');
+      rel.className = 'al-rel';
+      rel.textContent = dueRelLabel(diff);
+      due.appendChild(rel);
+    }
+  } else {
+    due.textContent = '期日なし';
+  }
+  row.appendChild(due);
+
+  const main = document.createElement('div');
+  main.className = 'al-main';
+
+  const jump = () => {
+    currentId = chart.id;
+    viewMode = 'chart';
+    render();
+    window.scrollTo({ top: 0 });
+  };
+
+  const textBtn = document.createElement('button');
+  textBtn.className = 'al-text' + (a.text.trim() ? '' : ' untitled');
+  textBtn.textContent = num + '　' + (a.text.trim() || '（無題のステップ）');
+  textBtn.title = 'このステップがあるチャートを開く';
+  textBtn.addEventListener('click', jump);
+  main.appendChild(textBtn);
+
+  const meta = document.createElement('div');
+  meta.className = 'al-meta';
+  const cBtn = document.createElement('button');
+  cBtn.className = 'al-chart';
+  cBtn.textContent = crumbLabel(chart);
+  cBtn.title = 'このチャートを開く';
+  cBtn.addEventListener('click', jump);
+  meta.appendChild(cBtn);
+  if(a.owner && a.owner.trim()){
+    const ow = document.createElement('span');
+    ow.className = 'al-owner';
+    ow.textContent = a.owner.trim();
+    meta.appendChild(ow);
+  }
+  main.appendChild(meta);
+  row.appendChild(main);
+
+  return row;
 }
 
 function crumbPath(){
