@@ -307,6 +307,66 @@ ul.items li:hover .lv,ul.items li:focus-within .lv{visibility:visible}
 .al-row.is-done .al-text{color:var(--muted);text-decoration:line-through}
 .btn.active{background:var(--vision);border-color:var(--vision);color:#fff}
 
+/* ---------- 過去の写しを閲覧中 ---------- */
+#ro-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:60;
+  align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--reality);color:#fff;padding:8px 18px;font-size:.82rem;letter-spacing:.04em}
+body.ro #ro-banner{display:flex}
+#ro-banner .ro-note{font-size:.72rem;opacity:.8;flex:1}
+#ro-banner .btn{font-size:.76rem;padding:4px 14px;background:#fff;border-color:#fff;color:var(--reality)}
+body.ro{padding-top:74px}
+body.ro.wb{padding-top:0}
+body.ro #wb-toolbar{top:40px}
+body.ro .pole.reality{outline:2px dashed var(--reality);outline-offset:3px}
+
+/* ---------- checkpoint / compare ---------- */
+.cp-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.cp-lead{font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.cp-save{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 18px}
+.cp-save input{flex:1;min-width:12em;font-family:inherit;font-size:.9rem;border:none;
+  border-bottom:1px solid var(--line);background:none;padding:3px 0}
+.cp-save input:focus{outline:none;border-bottom-color:var(--ink)}
+.cp-msg{font-size:.76rem;color:var(--muted)}
+.cp-list{border-top:1px solid var(--line);margin-bottom:26px}
+.cp-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.86rem;flex-wrap:wrap}
+.cp-row .lbl{flex:1;min-width:10em}
+.cp-row .when{font-size:.74rem;color:var(--muted);font-family:'Montserrat','Noto Sans JP',sans-serif}
+.cp-row .who{font-size:.72rem;color:var(--muted)}
+.cp-empty{font-size:.85rem;color:var(--muted);padding:10px 0}
+.cp-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin:8px 0 6px}
+.cp-pick select{font-family:inherit;font-size:.86rem;color:var(--ink);
+  border:none;border-bottom:1px solid var(--line);background:none;padding:1px 0;cursor:pointer;max-width:16em}
+.cp-summary{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 22px}
+.cp-summary span{font-size:.74rem;letter-spacing:.06em;border:1px solid var(--line);padding:2px 12px;border-radius:999px;color:var(--muted)}
+.cp-summary span b{color:var(--ink);font-family:'Montserrat','Noto Sans JP',sans-serif;margin-left:4px}
+.cp-chart{margin:22px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
+.cp-chart:first-of-type{border-top:none;padding-top:0}
+.cp-chart-ttl{display:flex;align-items:baseline;gap:10px;font-weight:700;font-size:.95rem;letter-spacing:.04em;cursor:pointer;background:none;border:none;font-family:inherit;color:var(--ink);text-align:left;padding:0;line-height:1.6}
+.cp-chart-ttl:hover{color:var(--vision);text-decoration:underline}
+.cp-chart-ttl .ov-num{min-width:0}
+.cp-chart-ttl.gone{color:var(--muted);cursor:default;text-decoration:none}
+.cp-sec{margin:8px 0 4px 4px}
+.cp-cap{font-size:.74rem;font-weight:700;letter-spacing:.14em;color:var(--muted);margin-bottom:2px}
+.cp-cap.reality{color:var(--reality)}
+.cp-cap.action{color:var(--action)}
+.cp-cap .dates{font-weight:400;letter-spacing:.02em;margin-left:8px;font-family:'Montserrat','Noto Sans JP',sans-serif}
+.cp-line{display:flex;align-items:flex-start;gap:8px;padding:2px 0;font-size:.88rem;line-height:1.6}
+.cp-line .sign{flex:none;min-width:1.2em;text-align:center;white-space:nowrap;font-family:'Montserrat','Noto Sans JP',sans-serif;font-weight:600}
+.cp-line.add .sign{color:var(--ink)}
+.cp-line.del{color:var(--muted)}
+.cp-line.del .txt{text-decoration:line-through}
+.cp-line.del .sign{color:var(--muted)}
+.cp-line .txt{flex:1;min-width:0;white-space:pre-wrap}
+.cp-line .tag{flex:none;font-size:.66rem;letter-spacing:.1em;border:1px solid var(--line);border-radius:999px;padding:0 9px;color:var(--muted);line-height:1.7;margin-top:2px}
+.cp-line .tag.done{background:var(--ink);border-color:var(--ink);color:#fff}
+.cp-line .tag.add{border-color:var(--ink);color:var(--ink)}
+.cp-line .tag.undone{border-color:var(--action);color:var(--action)}
+.cp-line .tag.chg{border-color:var(--reality);color:var(--reality)}
+.cp-line .chg-detail{display:block;font-size:.74rem;color:var(--muted)}
+.cp-line .chg-detail s{margin-right:6px}
+.cp-same{font-size:.74rem;color:var(--muted);padding:1px 0 0 2em}
+.cp-nochange{font-size:.82rem;color:var(--muted);margin-top:22px;padding-top:10px;border-top:1px dashed var(--line)}
+
 input[type="file"]{display:none}
 
 @media (max-width:560px){
@@ -435,6 +495,7 @@ body.wb #wb-ui{display:block}
       <button class="btn" id="btn-mode-board">ホワイトボード</button>
       <button class="btn" id="btn-view">全体を見渡す</button>
       <button class="btn" id="btn-actions">アクション一覧</button>
+      <button class="btn" id="btn-compare">チェックポイント</button>
       <button class="btn" id="btn-members">メンバー</button>
       <button class="btn" id="btn-save">保存（JSON）</button>
       <button class="btn" id="btn-load">読み込み</button>
@@ -479,6 +540,12 @@ body.wb #wb-ui{display:block}
     </div>
   </div>
   <div class="wb-hint">スクロール：移動　⌘+ホイール／ピンチ：拡大縮小　背景ドラッグ：移動　JSONファイルはドロップでも読み込めます</div>
+</div>
+
+<div id="ro-banner">
+  <span id="ro-label"></span>
+  <span class="ro-note">編集しても保存されません</span>
+  <button class="btn" id="ro-back">今に戻る</button>
 </div>
 
 <div id="auth-gate" class="modal-bg" style="display:none">
@@ -807,12 +874,19 @@ $btnActions.addEventListener('click', () => {
   viewMode = viewMode === 'actions' ? 'chart' : 'actions';
   render();
 });
+const $btnCompare = document.getElementById('btn-compare');
+$btnCompare.addEventListener('click', () => {
+  viewMode = viewMode === 'compare' ? 'chart' : 'compare';
+  render();
+});
 
 function render(){
   $btnView.textContent = viewMode === 'overview' ? 'チャートに戻る' : '全体を見渡す';
   $btnView.classList.toggle('active', viewMode === 'overview');
   $btnActions.textContent = viewMode === 'actions' ? 'チャートに戻る' : 'アクション一覧';
   $btnActions.classList.toggle('active', viewMode === 'actions');
+  $btnCompare.textContent = viewMode === 'compare' ? 'チャートに戻る' : 'チェックポイント';
+  $btnCompare.classList.toggle('active', viewMode === 'compare');
   if(viewMode === 'overview'){
     $crumbs.innerHTML = '';
     $chart.classList.add('no-line');
@@ -821,6 +895,10 @@ function render(){
     $crumbs.innerHTML = '';
     $chart.classList.add('no-line');
     renderActionList();
+  } else if(viewMode === 'compare'){
+    $crumbs.innerHTML = '';
+    $chart.classList.add('no-line');
+    renderCompare();
   } else {
     $chart.classList.remove('no-line');
     renderCrumbs();
@@ -2355,6 +2433,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $gate = document.getElementById('auth-gate');
 const $status = document.getElementById('sync-status');
 let lastSavedJson = null, lastRemoteTs = null, saving = false;
+let viewingSnap = null;      // 閲覧中のチェックポイント {id,label,taken_at} / null = 今
+let liveDb = null, liveCurrentId = null;
 
 function setStatus(t, danger){
   $status.textContent = t;
@@ -2396,6 +2476,7 @@ async function loadRemote(){
     return;
   }
   if(row){
+    if(viewingSnap){ liveDb = row.data; lastRemoteTs = row.updated_at; lastSavedJson = JSON.stringify(liveDb); setStatus('同期済み'); return; }
     db = row.data;
     currentId = db.rootId;
     reconcileDates(); ensureMembers();
@@ -2427,12 +2508,12 @@ async function saveRemote(isFirst){
 }
 
 setInterval(() => {
-  if(saving || lastSavedJson === null) return;
+  if(viewingSnap || saving || lastSavedJson === null) return;
   if(JSON.stringify(db) !== lastSavedJson) saveRemote();
 }, 2500);
 
 setInterval(async () => {
-  if(lastRemoteTs === null || saving) return;
+  if(viewingSnap || lastRemoteTs === null || saving) return;
   if(JSON.stringify(db) !== lastSavedJson) return;
   const { data: row } = await sb.from('tension_charts')
     .select('updated_at').eq('id', CHART_ID).maybeSingle();
@@ -2440,7 +2521,7 @@ setInterval(async () => {
 }, 30000);
 
 window.addEventListener('beforeunload', () => {
-  if(lastSavedJson !== null && JSON.stringify(db) !== lastSavedJson){
+  if(!viewingSnap && lastSavedJson !== null && JSON.stringify(db) !== lastSavedJson){
     navigator.sendBeacon && saveRemote();
   }
 });
@@ -2455,6 +2536,349 @@ sb.auth.onAuthStateChange((_e, session) => {
   else { $gate.style.display = 'flex'; }
 });
 boot();
+</script>
+
+<script>
+/* ================= チェックポイント（履歴）と比較 ================= */
+/* Supabase テーブル tension_chart_snapshots：id, chart_id, label, taken_at, taken_by, data */
+const SNAP_TABLE = 'tension_chart_snapshots';
+let snapList = null;                 // [{id,label,taken_at,taken_by}]（新しい順）
+const snapCache = new Map();         // id -> data
+let cpFrom = '', cpTo = 'now', cpBusy = false, cpMsg = '', cpRenderTok = 0;
+const $roBanner = document.getElementById('ro-banner');
+
+async function viewSnapshot(s){
+  let data;
+  try{ data = await getSnapData(s.id); }catch(err){ alert('取得できませんでした：' + err.message); return; }
+  if(!viewingSnap){ liveDb = db; liveCurrentId = currentId; }
+  viewingSnap = s;
+  db = JSON.parse(JSON.stringify(data));
+  currentId = db.rootId;
+  ensureMembers();
+  viewMode = 'chart';
+  document.body.classList.add('ro');
+  document.getElementById('ro-label').textContent = `${s.label || fmtWhen(s.taken_at)}（${fmtWhen(s.taken_at)}）の写しを見ています`;
+  wbPendingFit = true;
+  renderActive();
+  window.scrollTo({top: 0});
+}
+function backToNow(){
+  if(!viewingSnap) return;
+  db = liveDb; currentId = (liveCurrentId && db.charts[liveCurrentId]) ? liveCurrentId : db.rootId;
+  viewingSnap = null; liveDb = null;
+  document.body.classList.remove('ro');
+  viewMode = 'chart';
+  wbPendingFit = true;
+  renderActive();
+}
+document.getElementById('ro-back').addEventListener('click', backToNow);
+
+function fmtWhen(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+async function loadSnapList(){
+  const { data, error } = await sb.from(SNAP_TABLE)
+    .select('id,label,taken_at,taken_by').eq('chart_id', CHART_ID)
+    .order('taken_at', { ascending: false });
+  if(error){ cpMsg = 'チェックポイントを読めませんでした：' + error.message; snapList = []; return; }
+  snapList = data || [];
+  if(!cpFrom && snapList.length) cpFrom = snapList[0].id;
+}
+async function getSnapData(id){
+  if(snapCache.has(id)) return snapCache.get(id);
+  const { data, error } = await sb.from(SNAP_TABLE).select('data').eq('id', id).single();
+  if(error) throw error;
+  snapCache.set(id, data.data);
+  return data.data;
+}
+async function saveCheckpoint(label){
+  const { data: { session } } = await sb.auth.getSession();
+  const { data, error } = await sb.from(SNAP_TABLE)
+    .insert({ chart_id: CHART_ID, label, taken_by: session?.user?.email || '',
+              data: JSON.parse(JSON.stringify(db)) })
+    .select('id,label,taken_at,taken_by').single();
+  if(error) throw error;
+  snapCache.set(data.id, JSON.parse(JSON.stringify(db)));
+  snapList = null;
+  cpFrom = data.id;
+}
+async function deleteCheckpoint(id){
+  const { error } = await sb.from(SNAP_TABLE).delete().eq('id', id);
+  if(error) throw error;
+  snapCache.delete(id);
+  snapList = null;
+  if(cpFrom === id) cpFrom = '';
+  if(cpTo === id) cpTo = 'now';
+}
+/* ---- 任意の db オブジェクトに対するツリー走査（番号付き） ---- */
+function walkDb(d){
+  const out = [];   // [{chart, num, label}]
+  const subOf = aid => Object.values(d.charts).find(c => c.parentActionId === aid) || null;
+  (function walk(chart, prefix, label){
+    out.push({ chart, num: prefix, label });
+    chart.actions.forEach((a, i) => {
+      const num = prefix === '' ? String(i + 1) : `${prefix}-${i + 1}`;
+      const sub = subOf(a.id);
+      if(sub) walk(sub, num, a.text.trim() || '（無題のステップ）');
+    });
+  })(d.charts[d.rootId], '', 'マスターチャート');
+  return out;
+}
+const normLines = items => (items || []).map(s => (s || '').trim()).filter(Boolean);
+function lineDiff(before, after){
+  const b = normLines(before), a = normLines(after);
+  const bs = new Set(b), as = new Set(a);
+  return { added: a.filter(x => !bs.has(x)), removed: b.filter(x => !as.has(x)), same: a.filter(x => bs.has(x)).length };
+}
+
+function F_countSubtree(d, id){
+  const subOf = aid => Object.values(d.charts).find(c => c.parentActionId === aid) || null;
+  let n = 0;
+  (function walk(c){ n++; c.actions.forEach(a => { const s = subOf(a.id); if(s) walk(s); }); })(d.charts[id]);
+  return n;
+}
+/* ---- 差分の計算 ---- */
+function diffDbs(from, to){
+  const F = walkDb(from), T = walkDb(to);
+  const fMap = new Map(F.map(e => [e.chart.id, e]));
+  const tMap = new Map(T.map(e => [e.chart.id, e]));
+  const result = [];
+  const tot = { done: 0, undone: 0, added: 0, removed: 0, changed: 0, realityLines: 0, goalLines: 0, goneCharts: 0 };
+
+  T.forEach(te => {
+    const fe = fMap.get(te.chart.id);
+    const c = te.chart, fc = fe ? fe.chart : null;
+    const goal    = lineDiff(fc ? fc.goalItems : [], c.goalItems);
+    const reality = lineDiff(fc ? fc.realityItems : [], c.realityItems);
+    const acts = [];
+    const fActs = new Map((fc ? fc.actions : []).map(a => [a.id, a]));
+    c.actions.forEach((a, i) => {
+      const num = te.num === '' ? String(i + 1) : `${te.num}-${i + 1}`;
+      const fa = fActs.get(a.id);
+      if(!fa){ acts.push({ kind: 'add', a, num }); tot.added++; return; }
+      const ch = [];
+      if(!fa.done && a.done){ ch.push({ k: 'done' }); tot.done++; }
+      if(fa.done && !a.done){ ch.push({ k: 'undone' }); tot.undone++; }
+      if((fa.text || '').trim() !== (a.text || '').trim()) ch.push({ k: 'text', from: fa.text, to: a.text });
+      if((fa.due || '') !== (a.due || '')) ch.push({ k: 'due', from: fa.due, to: a.due });
+      if((fa.owner || '').trim() !== (a.owner || '').trim()) ch.push({ k: 'owner', from: fa.owner, to: a.owner });
+      if(ch.length){
+        if(ch.some(x => x.k !== 'done' && x.k !== 'undone')) tot.changed++;
+        acts.push({ kind: 'chg', a, num, ch });
+      }
+    });
+    (fc ? fc.actions : []).forEach((fa, i) => {
+      if(c.actions.some(a => a.id === fa.id)) return;
+      const num = fe.num === '' ? String(i + 1) : `${fe.num}-${i + 1}`;
+      acts.push({ kind: 'del', a: fa, num }); tot.removed++;
+    });
+    tot.realityLines += reality.added.length + reality.removed.length;
+    tot.goalLines += goal.added.length + goal.removed.length;
+    const dateChg = {
+      goal:    fc && (fc.goalDate || '') !== (c.goalDate || '') ? [fc.goalDate, c.goalDate] : null,
+      reality: fc && (fc.realityDate || '') !== (c.realityDate || '') ? [fc.realityDate, c.realityDate] : null,
+    };
+    const has = goal.added.length || goal.removed.length || reality.added.length || reality.removed.length ||
+                acts.length || dateChg.goal || dateChg.reality || !fc;
+    result.push({ id: c.id, num: te.num, label: te.label, isNew: !fc, gone: false, goal, reality, acts, dateChg, has, from: fc, to: c });
+  });
+  // 比較元にはあって今は無いチャート
+  const parentGone = c => {
+    if(!c.parentActionId) return false;
+    const p = Object.values(from.charts).find(x => x.actions.some(a => a.id === c.parentActionId));
+    return !!p && !tMap.has(p.id);
+  };
+  F.forEach(fe => {
+    if(tMap.has(fe.chart.id)) return;
+    if(parentGone(fe.chart)) return;   // 親ごと消えたチャートは親だけ載せる
+    const c = fe.chart;
+    const acts = c.actions.map((a, i) => ({ kind: 'del', a, num: fe.num === '' ? String(i + 1) : `${fe.num}-${i + 1}` }));
+    tot.goneCharts++;
+    result.push({ id: c.id, num: fe.num, label: fe.label, isNew: false, gone: true,
+      goal: { added: [], removed: normLines(c.goalItems), same: 0 },
+      reality: { added: [], removed: normLines(c.realityItems), same: 0 },
+      acts, dateChg: { goal: null, reality: null }, has: true, from: c, to: null });
+  });
+  return { result, tot };
+}
+
+/* ---- 画面 ---- */
+async function renderCompare(){
+  const tok = ++cpRenderTok;
+  $chart.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'overview';
+  $chart.appendChild(box);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; };
+
+  if(snapList === null){
+    box.appendChild(el('div', 'cp-empty', '読み込み中…'));
+    await loadSnapList();
+    if(viewMode !== 'compare' || tok !== cpRenderTok) return;
+    box.innerHTML = '';
+  }
+
+  /* --- 保存 --- */
+  const head = el('div', 'cp-head');
+  head.appendChild(el('div', 'ov-root', 'チェックポイント'));
+  box.appendChild(head);
+  box.appendChild(el('div', 'cp-lead',
+    'チャートは今の状態に上書きしていくもの。直す前に日付付きの写しを残しておくと、あとで「あのとき何を見て、何をやろうとしていたか」と「今」を並べて振り返れます。'));
+
+  const saveRow = el('div', 'cp-save');
+  if(viewingSnap) saveRow.style.display = 'none';
+  const inp = el('input');
+  inp.placeholder = '名前（例：2026-10 チュートリアル前）';
+  inp.value = todayYMD();
+  const bSave = el('button', 'btn', '今の状態を保存');
+  bSave.disabled = cpBusy;
+  bSave.addEventListener('click', async () => {
+    const label = inp.value.trim() || todayYMD();
+    if(cpBusy) return;
+    cpBusy = true; cpMsg = ''; render();
+    try{ await saveCheckpoint(label); cpMsg = `「${label}」を保存しました`; }
+    catch(err){ cpMsg = '保存できませんでした：' + err.message; }
+    cpBusy = false; render();
+  });
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter') bSave.click(); });
+  saveRow.appendChild(inp); saveRow.appendChild(bSave);
+  if(cpMsg) saveRow.appendChild(el('span', 'cp-msg', cpMsg));
+  box.appendChild(saveRow);
+
+  /* --- 一覧 --- */
+  const list = el('div', 'cp-list');
+  if(snapList.length === 0) list.appendChild(el('div', 'cp-empty', 'まだチェックポイントがありません。最初の写しを保存してください。'));
+  snapList.forEach(s => {
+    const row = el('div', 'cp-row');
+    row.appendChild(el('span', 'lbl', s.label || '（無題）'));
+    row.appendChild(el('span', 'when', fmtWhen(s.taken_at)));
+    if(s.taken_by) row.appendChild(el('span', 'who', s.taken_by));
+    const bView = el('button', 'mini', viewingSnap && viewingSnap.id === s.id ? '表示中' : '見る');
+    bView.title = 'この時点のチャートを開く（編集しても保存されません）';
+    bView.addEventListener('click', () => viewSnapshot(s));
+    row.appendChild(bView);
+    const bDel = el('button', 'mini danger', '削除');
+    bDel.addEventListener('click', async () => {
+      if(!confirm(`チェックポイント「${s.label || fmtWhen(s.taken_at)}」を削除しますか？`)) return;
+      try{ await deleteCheckpoint(s.id); cpMsg = '削除しました'; }catch(err){ cpMsg = '削除できませんでした：' + err.message; }
+      render();
+    });
+    row.appendChild(bDel);
+    list.appendChild(row);
+  });
+  box.appendChild(list);
+
+  if(snapList.length === 0) return;
+
+  /* --- 比較の選択 --- */
+  box.appendChild(el('div', 'ov-root', '比較'));
+  const pick = el('div', 'cp-pick');
+  const mk = (withNow) => {
+    const sel = el('select');
+    if(withNow){ const o = el('option', '', '今'); o.value = 'now'; sel.appendChild(o); }
+    snapList.forEach(s => { const o = el('option', '', (s.label || '（無題）') + '　' + fmtWhen(s.taken_at).slice(0, 10)); o.value = s.id; sel.appendChild(o); });
+    return sel;
+  };
+  const selFrom = mk(false); selFrom.value = cpFrom || snapList[0].id;
+  const selTo = mk(true); selTo.value = cpTo;
+  selFrom.addEventListener('change', () => { cpFrom = selFrom.value; render(); });
+  selTo.addEventListener('change', () => { cpTo = selTo.value; render(); });
+  pick.append('比較元'); pick.appendChild(selFrom); pick.append('→'); pick.appendChild(selTo);
+  box.appendChild(pick);
+
+  let fromDb, toDb;
+  try{
+    fromDb = await getSnapData(selFrom.value);
+    toDb = cpTo === 'now' ? (viewingSnap ? liveDb : db) : await getSnapData(cpTo);
+  }catch(err){ box.appendChild(el('div', 'cp-empty', '読み込めませんでした：' + err.message)); return; }
+  if(viewMode !== 'compare' || tok !== cpRenderTok) return;
+
+  const { result, tot } = diffDbs(fromDb, toDb);
+
+  const sum = el('div', 'cp-summary');
+  const pill = (label, n) => { const s = el('span', '', label); const b = el('b', '', String(n)); s.appendChild(b); return s; };
+  sum.appendChild(pill('完了', tot.done));
+  sum.appendChild(pill('追加', tot.added));
+  sum.appendChild(pill('削除', tot.removed));
+  sum.appendChild(pill('変更', tot.changed));
+  if(tot.undone) sum.appendChild(pill('完了→戻し', tot.undone));
+  if(tot.goneCharts) sum.appendChild(pill('削除されたチャート', tot.goneCharts));
+  sum.appendChild(pill('リアリティの変化（行）', tot.realityLines));
+  sum.appendChild(pill('望む成果の変化（行）', tot.goalLines));
+  box.appendChild(sum);
+
+  const changed = result.filter(r => r.has);
+  if(changed.length === 0){ box.appendChild(el('div', 'cp-empty', '違いはありません')); return; }
+
+  changed.forEach(r => {
+    const sec = el('div', 'cp-chart');
+    const ttl = el('button', 'cp-chart-ttl' + (r.gone ? ' gone' : ''));
+    if(r.num) ttl.appendChild(el('span', 'ov-num', r.num));
+    ttl.appendChild(el('span', '', r.label + (r.isNew ? '　（新しいチャート）' : r.gone ? '　（削除されたチャート）' : '')));
+    if(!r.gone){
+      ttl.title = 'このチャートを開く';
+      ttl.addEventListener('click', () => { if(db.charts[r.id]){ currentId = r.id; viewMode = 'chart'; render(); window.scrollTo({top: 0}); } });
+    }
+    sec.appendChild(ttl);
+    if(r.gone){
+      const subs = F_countSubtree(fromDb, r.id);
+      sec.appendChild(el('div', 'cp-same', `このチャート（ステップ ${r.from.actions.length}${subs > 1 ? '、下位チャート ' + (subs - 1) : ''}）ごと削除されました`));
+      box.appendChild(sec);
+      return;
+    }
+
+    const lines = (cap, cls, d, dates) => {
+      if(!d.added.length && !d.removed.length && !dates) return;
+      const s = el('div', 'cp-sec');
+      const c = el('div', 'cp-cap ' + cls, cap);
+      if(dates){ c.appendChild(el('span', 'dates', `${dates[0] || '—'} → ${dates[1] || '—'}`)); }
+      s.appendChild(c);
+      d.removed.forEach(t => { const l = el('div', 'cp-line del'); l.appendChild(el('span', 'sign', '−')); l.appendChild(el('span', 'txt', parseItem(t).text)); s.appendChild(l); });
+      d.added.forEach(t => { const l = el('div', 'cp-line add'); l.appendChild(el('span', 'sign', '＋')); l.appendChild(el('span', 'txt', parseItem(t).text)); s.appendChild(l); });
+      if(d.same) s.appendChild(el('div', 'cp-same', `変わらない行 ${d.same}`));
+      sec.appendChild(s);
+    };
+    lines('望む成果', 'goal', r.goal, r.dateChg.goal);
+    lines('今のリアリティ', 'reality', r.reality, r.dateChg.reality);
+
+    if(r.acts.length){
+      const s = el('div', 'cp-sec');
+      s.appendChild(el('div', 'cp-cap action', 'アクションステップ'));
+      r.acts.forEach(e => {
+        const l = el('div', 'cp-line ' + (e.kind === 'del' ? 'del' : e.kind === 'add' ? 'add' : 'chg'));
+        l.appendChild(el('span', 'sign', e.num));
+        const txt = el('span', 'txt', e.a.text.trim() || '（無題のステップ）');
+        const meta = [];
+        if(e.a.due) meta.push('期日 ' + e.a.due);
+        if(e.a.owner && e.a.owner.trim()) meta.push(e.a.owner.trim());
+        if(e.kind === 'add'){
+          l.appendChild(txt); l.appendChild(el('span', 'tag add', '追加'));
+          if(meta.length) txt.appendChild(el('span', 'chg-detail', meta.join('　')));
+        } else if(e.kind === 'del'){
+          l.appendChild(txt); l.appendChild(el('span', 'tag', '削除'));
+          if(meta.length) txt.appendChild(el('span', 'chg-detail', meta.join('　')));
+        } else {
+          l.appendChild(txt);
+          e.ch.forEach(ch => {
+            if(ch.k === 'done')   l.appendChild(el('span', 'tag done', '完了'));
+            if(ch.k === 'undone') l.appendChild(el('span', 'tag undone', '完了→戻し'));
+            if(ch.k === 'text'){ l.appendChild(el('span', 'tag chg', '文言')); const d = el('span', 'chg-detail'); d.appendChild(el('s', '', ch.from.trim() || '（無題）')); d.append(' → ' + (ch.to.trim() || '（無題）')); txt.appendChild(d); }
+            if(ch.k === 'due'){ l.appendChild(el('span', 'tag chg', '期日')); txt.appendChild(el('span', 'chg-detail', `期日 ${ch.from || '—'} → ${ch.to || '—'}`)); }
+            if(ch.k === 'owner'){ l.appendChild(el('span', 'tag chg', '担当')); txt.appendChild(el('span', 'chg-detail', `担当 ${(ch.from || '').trim() || '—'} → ${(ch.to || '').trim() || '—'}`)); }
+          });
+        }
+        s.appendChild(l);
+      });
+      sec.appendChild(s);
+    }
+    box.appendChild(sec);
+  });
+  const unchanged = result.length - changed.length;
+  if(unchanged) box.appendChild(el('div', 'cp-nochange', `変化のないチャート：${unchanged}`));
+}
 </script>
 </body>
 </html>
